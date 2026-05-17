@@ -2,448 +2,518 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>法典裁决 | 培风资讯社</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宿命法典 · 核心核销枢纽</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
     
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
-            --ancient-gold: #c29f64;
-            --deep-ink: #0f0f14;
-            --blood-dark: #4a0e0e;
-            --paper: #d8c8b8;
-            --success-green: #2ecc71;
+            --gold: #c29f64;
+            --bg-dark: #121216;
+            --card-bg: #1a1a22;
+            --green: #2ecc71;
+            --red: #e74c3c;
         }
-
         body {
-            background: #0a0a0c radial-gradient(circle at center, #1e1e26 0%, #0a0a0c 100%);
-            color: var(--paper);
+            background-color: var(--bg-dark);
+            color: #e0e0e0;
             font-family: 'Noto Serif SC', serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
-            min-height: 100vh;
-            overflow-x: hidden;
         }
-
-        .container {
+        .staff-container {
             width: 100%;
-            max-width: 480px;
-            padding: 40px 25px;
-            box-sizing: border-box;
-            border-left: 2px solid rgba(194, 159, 100, 0.2);
-            border-right: 2px solid rgba(194, 159, 100, 0.2);
-        }
-
-        h1 {
-            font-family: 'Ma Shan Zheng', cursive, serif;
-            font-size: 2.6rem;
-            text-align: center;
-            color: var(--ancient-gold);
-            margin: 0;
-            text-shadow: 0 0 15px rgba(194, 159, 100, 0.3);
-        }
-
-        .subtitle {
-            font-size: 0.8rem;
-            text-align: center;
-            letter-spacing: 4px;
-            color: var(--ancient-gold);
-            opacity: 0.7;
-            margin-bottom: 35px;
-        }
-
-        /* 🔮 实时动态云端库存看板（与前台风格对齐） */
-        .live-stock-panel {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px dashed rgba(194, 159, 100, 0.3);
+            max-width: 600px;
+            background: var(--card-bg);
+            border: 2px solid var(--gold);
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 30px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            display: none; /* 验证成功前隐藏 */
         }
-        .stock-title {
-            font-size: 0.8rem;
-            color: var(--ancient-gold);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .stock-display-row {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .stock-item {
-            font-size: 0.85rem;
-            color: #bbb;
-        }
-        .stock-item span {
-            font-weight: bold;
-            color: #fff;
-            font-size: 1.1rem;
-        }
-
-        /* 灵魂报告裁决卡片 */
-        .report-card {
-            background: rgba(15, 15, 20, 0.95);
-            border: 2px solid var(--ancient-gold);
-            border-radius: 12px;
-            padding: 30px 20px;
-            box-shadow: 0 0 30px rgba(194, 159, 100, 0.2);
-            margin-bottom: 30px;
-        }
-
-        .rank-title {
+        h1 {
+            color: var(--gold);
             text-align: center;
             font-size: 1.8rem;
-            color: #ff4a4a;
+            margin-top: 0;
+            border-bottom: 2px double rgba(194,159,100,0.3);
+            padding-bottom: 10px;
+        }
+        
+        /* 库存看板 */
+        .stock-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stock-card {
+            background: #22222c;
+            border: 1px solid rgba(194,159,100,0.2);
+            border-radius: 6px;
+            padding: 12px 5px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .stock-card.active {
+            border-color: var(--gold);
+            background: rgba(194,159,100,0.1);
+            box-shadow: 0 0 10px rgba(194,159,100,0.2);
+        }
+        .stock-card h3 {
+            margin: 0 0 5px 0;
+            font-size: 0.85rem;
+            color: var(--gold);
+        }
+        .stock-num {
+            font-size: 1.6rem;
             font-weight: bold;
-            letter-spacing: 3px;
-            margin-bottom: 25px;
-            text-shadow: 0 0 10px rgba(255, 74, 74, 0.4);
-        }
-
-        .report-item {
-            border-bottom: 1px dashed rgba(194, 159, 100, 0.2);
-            padding: 14px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .report-item:last-child { border: none; }
-
-        .item-label {
-            color: var(--ancient-gold);
-            font-size: 0.95rem;
-        }
-
-        .item-val {
             color: #fff;
-            font-weight: bold;
-            font-size: 1.05rem;
         }
 
-        /* 元素卡片高亮底色 */
-        #res_tarot {
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        /* 核销渠道选择区域 */
-        .pool-selector-box {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(194, 159, 100, 0.3);
-            padding: 18px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-        .pool-selector-box label {
-            display: block;
-            font-size: 0.9rem;
-            color: var(--ancient-gold);
-            margin-bottom: 12px;
-            font-weight: bold;
+        /* 扫码互动功能区 */
+        .scanner-section {
+            background: #0d0d11;
+            border: 1px dashed rgba(194,159,100,0.4);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
             text-align: center;
         }
-        .radio-group {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .radio-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #ccc;
-            font-size: 0.95rem;
+        .scan-btn {
+            background: #4a0e0e;
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 12px 25px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 4px;
             cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
         }
-        .radio-label input[type="radio"] {
-            width: auto;
-            accent-color: var(--ancient-gold);
-            cursor: pointer;
+        #reader {
+            width: 100%;
+            max-width: 350px;
+            margin: 0 auto;
+            border-radius: 6px;
+            overflow: hidden;
+            display: none;
         }
 
-        /* 裁决核销大按钮 */
-        .mystic-btn {
+        /* 扫描解析面板 */
+        .data-panel {
+            background: #0d0d11;
+            border-left: 4px solid var(--gold);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .data-row:last-child { margin-bottom: 0; }
+        .label { color: #888; }
+        .val { color: #fff; font-weight: bold; }
+        .val.rank-SSR { color: #ff4a4a; text-shadow: 0 0 5px rgba(255,74,74,0.3); }
+        .val.rank-SR { color: #ffaa00; }
+
+        /* 特别嘉宾勾选区 */
+        .guest-box {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .guest-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .guest-box label {
+            font-weight: bold;
+            color: var(--red);
+            cursor: pointer;
+        }
+        .guest-box input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .guest-count-input {
+            width: 70px;
+            background: #222;
+            border: 1px solid var(--red);
+            color: white;
+            padding: 5px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 1rem;
+            display: none;
+        }
+
+        .action-btn {
             display: block;
             width: 100%;
-            padding: 18px;
-            background: var(--blood-dark);
-            color: var(--ancient-gold);
-            border: 1px solid var(--ancient-gold);
-            font-family: 'Ma Shan Zheng', cursive, serif;
-            font-size: 1.5rem;
-            letter-spacing: 2px;
+            padding: 15px;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            transition: all 0.1s;
-            -webkit-tap-highlight-color: transparent;
+            transition: background 0.2s;
         }
-
-        .mystic-btn:active {
-            background: var(--ancient-gold);
-            color: black;
-        }
-
-        .mystic-btn:disabled {
-            background: #222 !important;
-            color: #555 !important;
-            border-color: #333 !important;
+        .action-btn:hover { background: #dfb875; }
+        .action-btn:disabled {
+            background: #444;
+            color: #888;
             cursor: not-allowed;
-            box-shadow: none;
+        }
+
+        /* 历史记录 */
+        .history-section {
+            margin-top: 30px;
+            border-top: 1px dashed rgba(194,159,100,0.3);
+            padding-top: 15px;
+        }
+        .history-title {
+            font-size: 1rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+        .history-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #0d0d11;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+        .history-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 style="margin-top: 30px;">法典裁决端</h1>
-    <p class="subtitle">—— 培风资讯社 · 现场核销核心 ——</p>
+<div class="staff-container" id="mainHub">
+    <h1>培风资讯社 · 核销主控台</h1>
 
-    <div class="live-stock-panel">
-        <div class="stock-title">✦ 当前圣殿盲盒剩余量 ✦</div>
-        <div class="stock-display-row">
-            <div class="stock-item">今日常规池: <span id="display-day">--</span> 个</div>
-            <div class="stock-item">特别嘉宾池: <span id="display-guest">--</span> 个</div>
+    <div class="stock-board">
+        <div class="stock-card active" id="btn-day1" onclick="switchPool('day1')">
+            <h3>第一天库存</h3>
+            <div class="stock-num" id="stock-day1">--</div>
+        </div>
+        <div class="stock-card" id="btn-day2" onclick="switchPool('day2')">
+            <h3>第二天库存</h3>
+            <div class="stock-num" id="stock-day2">--</div>
+        </div>
+        <div class="stock-card" id="btn-guest" onclick="switchPool('guest')">
+            <h3>特别嘉宾池</h3>
+            <div class="stock-num" id="stock-guest">--</div>
         </div>
     </div>
 
-    <div class="report-card">
-        <div class="rank-title" id="fate_rank">【等待扫码】</div>
+    <div class="scanner-section">
+        <button class="scan-btn" id="startScanBtn" onclick="startCameraScanner()">📷 开启摄像头原地扫码</button>
+        <div id="reader"></div>
+    </div>
 
-        <div class="report-item">
-            <span class="item-label">✦ 来宾最终评级</span>
-            <span class="item-val" id="res_rank_txt">-</span>
+    <div class="data-panel">
+        <div class="data-row">
+            <span class="label">解析状态：</span>
+            <span class="val" id="parse-status" style="color:var(--red)">等待云端同步及扫描数据...</span>
         </div>
-        <div class="report-item">
-            <span class="item-label">✦ 灵魂主控命牌 (塔罗)</span>
-            <span class="item-val" id="res_tarot">-</span>
+        <div class="data-row">
+            <span class="label">玩家天命段位：</span>
+            <span class="val" id="player-rank">-</span>
         </div>
-        <div class="report-item">
-            <span class="item-label">✦ 灵视精度 (记忆力)</span>
-            <span class="item-val" id="res_memory">-</span>
+        <div class="data-row">
+            <span class="label">灵魂主控命牌：</span>
+            <span class="val" id="player-tarot">-</span>
         </div>
-        <div class="report-item">
-            <span class="item-label">✦ 瞬动神速 (反应力)</span>
-            <span class="item-val" id="res_reaction">-</span>
-        </div>
-        <div class="report-item">
-            <span class="item-label">✦ 神圣律动 (节奏感)</span>
-            <span class="item-val" id="res_rhythm">-</span>
+        <div class="data-row">
+            <span class="label">试炼原始成绩：</span>
+            <span class="val" id="player-scores">-</span>
         </div>
     </div>
 
-    <div class="pool-selector-box">
-        <label>⚡ 请选择扣除的礼品池信道 ⚡</label>
-        <div class="radio-group">
-            <label class="radio-label">
-                <input type="radio" name="poolType" value="day" checked> 扣除常规池
-            </label>
-            <label class="radio-label">
-                <input type="radio" name="poolType" value="guest"> 扣除特别嘉宾池
-            </label>
+    <div class="guest-box">
+        <div style="display:flex; flex-direction:column;">
+            <label for="isGuest">✦ 激活特别嘉宾核销 ✦</label>
+            <span style="font-size:0.75rem; color:#aaa; margin-top:3px;">勾选后转入嘉宾通道，支持多发礼品</span>
+        </div>
+        <div class="guest-control">
+            <input type="checkbox" id="isGuest" onchange="toggleGuestMode()">
+            <input type="number" id="guestGiftCount" class="guest-count-input" value="1" min="1">
         </div>
     </div>
 
-    <button class="mystic-btn" id="verifyBtn" onclick="executeVerification()" disabled>⚡ 确认裁决 · 扣除盲盒库存</button>
+    <button class="action-btn" id="confirmBtn" onclick="executeVerification()" disabled>确认核销并发放礼品</button>
+
+    <div class="history-section">
+        <div class="history-title">🕒 现场成功核销流水 (最新5条)</div>
+        <div class="history-list" id="historyList">
+            <div style="color:#666; text-align:center; padding:10px;">暂无当前核销记录</div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // ==================== 【Supabase 云端实时初始化连接】 ====================
+    // ==================== 【已自动绑定你的 Supabase 信息】 ====================
     const SUPABASE_URL = "https://eglmalfktjrrvkiolqrd.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_H8C9O523vQl89-h-Y1Mj_A_7DjNCiQy"; 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 塔罗牌华文对照数据库 (与 index.html 完全对齐)
-    const tarotDatabase = [
-        { name: "愚者 (The Fool)" }, { name: "魔术师 (The Magician)" }, { name: "女祭司 (The High Priestess)" },
-        { name: "皇后 (The Empress)" }, { name: "皇帝 (The Emperor)" }, { name: "教皇 (The Hierophant)" },
-        { name: "恋人 (The Lovers)" }, { name: "战车 (The Chariot)" }, { name: "力量 (Strength)" },
-        { name: "隐者 (The Hermit)" }, { name: "命运之轮 (The Wheel of Fortune)" }, { name: "正义 (Justice)" },
-        { name: "倒吊人 (The Hanged Man)" }, { name: "死神 (Death)" }, { name: "节制 (Temperance)" },
-        { name: "恶魔 (The Devil)" }, { name: "塔 (The Tower)" }, { name: "星星 (The Star)" },
-        { name: "月亮 (The Moon)" }, { name: "太阳 (The Sun)" }, { name: "审判 (Judgement)" },
-        { name: "世界 (The World)" },
-        { name: "权杖 Ace (Ace of Wands)" }, { name: "权杖二 (Two of Wands)" }, { name: "权杖三 (Three of Wands)" },
-        { name: "权杖四 (Four of Wands)" }, { name: "权杖五 (Five of Wands)" }, { name: "权杖六 (Six of Wands)" },
-        { name: "权杖七 (Seven of Wands)" }, { name: "权杖八 (Eight of Wands)" }, { name: "权杖九 (Nine of Wands)" },
-        { name: "权杖十 (Ten of Wands)" }, { name: "权杖侍从 (Page of Wands)" }, { name: "权杖骑士 (Knight of Wands)" },
-        { name: "权杖皇后 (Queen of Wands)" }, { name: "权杖国王 (King of Wands)" },
-        { name: "圣杯 Ace (Ace of Cups)" }, { name: "圣杯二 (Two of Cups)" }, { name: "圣杯三 (Three of Cups)" },
-        { name: "圣杯四 (Four of Cups)" }, { name: "圣杯五 (Five of Cups)" }, { name: "圣杯六 (Six of Cups)" },
-        { name: "圣杯七 (Seven of Cups)" }, { name: "圣杯八 (Eight of Cups)" }, { name: "圣杯九 (Nine of Cups)" },
-        { name: "圣杯十 (Ten of Cups)" }, { name: "圣杯侍从 (Page of Cups)" }, { name: "圣杯骑士 (Knight of Cups)" },
-        { name: "圣杯皇后 (Queen of Cups)" }, { name: "圣杯国王 (King of Cups)" },
-        { name: "宝剑 Ace (Ace of Swords)" }, { name: "宝剑二 (Two of Swords)" }, { name: "宝剑三 (Three of Swords)" },
-        { name: "宝剑四 (Four of Swords)" }, { name: "宝剑五 (Five of Swords)" }, { name: "宝剑六 (Six of Swords)" },
-        { name: "宝剑七 (Seven of Swords)" }, { name: "宝剑八 (Eight of Swords)" }, { name: "宝剑九 (Nine of Swords)" },
-        { name: "宝剑十 (Ten of Swords)" }, { name: "宝剑侍从 (Page of Swords)" }, { name: "宝剑骑士 (Knight of Swords)" },
-        { name: "宝剑皇后 (Queen of Swords)" }, { name: "宝剑国王 (King of Swords)" },
-        { name: "钱币 Ace (Ace of Pentacles)" }, { name: "钱币二 (Two of Pentacles)" }, { name: "钱币三 (Three of Pentacles)" },
-        { name: "钱币四 (Four of Pentacles)" }, { name: "钱币五 (Five of Pentacles)" }, { name: "钱币六 (Six of Pentacles)" },
-        { name: "钱币七 (Seven of Pentacles)" }, { name: "钱币八 (Eight of Pentacles)" }, { name: "钱币九 (Nine of Pentacles)" },
-        { name: "钱币十 (Ten of Pentacles)" }, { name: "钱币侍从 (Page of Pentacles)" }, { name: "钱币骑士 (Knight of Pentacles)" },
-        { name: "钱币皇后 (Queen of Pentacles)" }, { name: "钱币国王 (King of Pentacles)" }
+    // ==================== 【学号规格限制：XXXX-XXX 自动放行】 ====================
+    function doAuthentication() {
+        let inputID = prompt("【安全御守】请输入工作人员学号以进入法典枢纽：");
+        if (inputID) {
+            inputID = inputID.trim().replace(/\s+/g, ""); 
+            const idPattern = /^\d{4}-\d{3}$/; // 4位数字-3位数字 规格
+            if (idPattern.test(inputID)) {
+                document.getElementById('mainHub').style.display = "block";
+                initSystem();
+            } else {
+                alert("学号不符合 XXXX-XXX 规格，拒绝访问！");
+                window.location.href = "about:blank";
+            }
+        } else {
+            window.location.href = "about:blank";
+        }
+    }
+
+    // ==================== 【云端数据核心控制】 ====================
+    let stocks = { day1: 0, day2: 0, guest: 0 }; 
+    let currentPool = 'day1'; 
+    let currentData = null;   
+    let html5QrcodeScanner = null; 
+
+    const tarotNames = [
+        "愚者", "魔术师", "女祭司", "皇后", "皇帝", "教皇", "恋人", "战车", "力量", "隐者", "命运之轮", "正义", "倒吊人", "死神", "节制", "恶魔", "塔", "星星", "月亮", "太阳", "审判", "世界",
+        "权杖 Ace", "权杖二", "权杖三", "权杖四", "权杖五", "权杖六", "权杖七", "权杖八", "权杖九", "权杖十", "权杖侍从", "权杖骑士", "权杖皇后", "权杖国王",
+        "圣杯 Ace", "圣杯二", "圣杯三", "圣杯四", "圣杯五", "圣杯六", "圣杯七", "圣杯八", "圣杯九", "圣杯十", "圣杯侍从", "圣杯骑士", "圣杯皇后", "圣杯国王",
+        "宝剑 Ace", "宝剑二", "宝剑三", "宝剑四", "宝剑五", "宝剑六", "宝剑七", "宝剑八", "宝剑九", "宝剑十", "宝剑侍从", "宝剑骑士", "宝剑皇后", "宝剑国王",
+        "钱币 Ace", "钱币二", "钱币三", "钱币四", "钱币五", "钱币六", "钱币七", "钱币八", "钱币九", "钱币十", "钱币侍从", "钱币骑士", "钱币皇后", "钱币国王"
     ];
 
-    let currentDayStockId = "day1"; // 默认第一天常规池
-    let currentDayCount = 0;
-    let guestCount = 0;
-
-    window.onload = async function() {
-        // 自动判定当前是会考第几天（26号及之后自动绑定day2库）
-        const todayDate = new Date().getDate();
-        if (todayDate >= 26) {
-            currentDayStockId = "day2";
-        }
-
-        // 初始化拉取实时数据
-        await fetchStocks();
-
-        // 实时监听数据库变动
+    async function initSystem() {
+        await fetchStocksFromCloud();
+        processParams(window.location.search);
+        
+        // 开启云端实时监听：别人扣了库存，你的手机屏幕看板会秒同步刷新
         _supabase
-            .channel('staff-watch')
+            .channel('any')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, payload => {
-                updateLocalStockState(payload.new.id, payload.new.count);
+                stocks[payload.new.id] = payload.new.count;
+                updateStockUI();
             })
             .subscribe();
-
-        // 解析 URL 参数（扫码传进来的数据）
-        parseUrlParams();
     }
 
-    async function fetchStocks() {
+    async function fetchStocksFromCloud() {
         const { data, error } = await _supabase.from('stocks').select('*');
-        if (!error && data) {
-            data.forEach(item => {
-                updateLocalStockState(item.id, item.count);
-            });
-        }
-    }
-
-    function updateLocalStockState(id, count) {
-        if (id === 'guest') {
-            guestCount = count;
-            const el = document.getElementById('display-guest');
-            if(el) el.innerText = count;
-        } else if (id === currentDayStockId) {
-            currentDayCount = count;
-            const el = document.getElementById('display-day');
-            if(el) el.innerText = count;
-        }
-    }
-
-    // ==================== 【逆向解密扫码数据逻辑】 ====================
-    function parseUrlParams() {
-        const params = new URLSearchParams(window.location.search);
-        const rank = params.get('r');
-        const tarotStr = params.get('t');
-        const mem = params.get('m');
-        const react = params.get('re');
-        const rhythm = params.get('rh');
-
-        if (!rank && !tarotStr) {
-            document.getElementById('fate_rank').innerText = "【等待扫码】";
+        if (error) {
+            console.error("无法读取云端库存:", error);
+            document.getElementById('parse-status').innerText = "❌ 无法连接到云数据库，请检查 RLS 是否关闭！";
             return;
         }
-
-        // 1. 解密段位
-        const decodedRank = decodeURIComponent(rank || "B");
-        let fullRankText = "B 阶 · 迷途观测者";
-        if (decodedRank === "SSR") fullRankText = "SSR 阶 · 破晓之神";
-        if (decodedRank === "SR") fullRankText = "SR 阶 · 星轨编织者";
-        if (decodedRank === "A") fullRankText = "A 阶 · 密教执行官";
-
-        document.getElementById('fate_rank').innerText = "✦ 报告加载成功 ✦";
-        document.getElementById('res_rank_txt').innerText = fullRankText;
-        if (decodedRank === "SSR") {
-            document.getElementById('res_rank_txt').style.color = "#ff4a4a";
-        } else if (decodedRank === "SR") {
-            document.getElementById('res_rank_txt').style.color = "#ffaa00";
-        } else {
-            document.getElementById('res_rank_txt').style.color = "var(--ancient-gold)";
-        }
-
-        // 2. 逆向映射华文命牌
-        const tarotIndex = parseInt(tarotStr) || 0;
-        const matchedTarot = tarotDatabase[tarotIndex] || { name: "未知命牌" };
-        const tarotEl = document.getElementById('res_tarot');
-        tarotEl.innerText = matchedTarot.name;
-
-        // 根据四大元素为命牌加持特异颜色特效
-        if (matchedTarot.name.includes("权杖")) {
-            tarotEl.style.color = "#ff5555"; // 火元素红
-        } else if (matchedTarot.name.includes("圣杯")) {
-            tarotEl.style.color = "#55aaff"; // 水元素蓝
-        } else if (matchedTarot.name.includes("宝剑")) {
-            tarotEl.style.color = "#55ffaa"; // 风元素绿
-        } else if (matchedTarot.name.includes("钱币")) {
-            tarotEl.style.color = "#e67e22"; // 土元素橙
-        } else {
-            tarotEl.style.color = "var(--ancient-gold)";
-        }
-
-        // 3. 填入具体测试数值
-        document.getElementById('res_memory').innerText = (mem || "0") + " pt";
-        document.getElementById('res_reaction').innerText = (react || "0") + " ms";
-        document.getElementById('res_rhythm').innerText = (rhythm || "0") + " %";
-
-        // 激活核销大按钮
-        document.getElementById('verifyBtn').disabled = false;
+        data.forEach(item => { stocks[item.id] = item.count; });
+        updateStockUI();
+        document.getElementById('parse-status').innerText = "📡 云端同步就绪，等待捕获数据...";
+        document.getElementById('parse-status').style.color = "var(--gold)";
     }
 
-    // ==================== 【执行云端扣减核销核心】 ====================
-    async function executeVerification() {
-        const btn = document.getElementById('verifyBtn');
-        btn.disabled = true;
-        btn.innerText = "正在镌刻法典并扣减库存...";
+    function updateStockUI() {
+        document.getElementById('stock-day1').innerText = stocks.day1;
+        document.getElementById('stock-day2').innerText = stocks.day2;
+        document.getElementById('stock-guest').innerText = stocks.guest;
+    }
 
-        const selectedPool = document.querySelector('input[name="poolType"]:checked').value;
+    function switchPool(poolName) {
+        if(document.getElementById('isGuest').checked) {
+            alert("当前正处于【特别嘉宾】模式，系统已强制锁定嘉宾专属池。");
+            return;
+        }
+        currentPool = poolName;
+        document.querySelectorAll('.stock-card').forEach(c => c.classList.remove('active'));
+        document.getElementById('btn-' + poolName).classList.add('active');
+    }
+
+    // ==================== 【原生摄像头扫描解析】 ====================
+    function startCameraScanner() {
+        const readerDiv = document.getElementById('reader');
+        readerDiv.style.display = "block";
+        document.getElementById('startScanBtn').innerText = "🔄 镜头扫描运行中...";
+
+        if (!html5QrcodeScanner) {
+            html5QrcodeScanner = new Html5Qrcode("reader");
+        }
+
+        html5QrcodeScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (qrCodeMessage) => {
+                html5QrcodeScanner.stop().then(() => {
+                    readerDiv.style.display = "none";
+                    document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
+                });
+
+                if (qrCodeMessage.includes('?')) {
+                    const paramString = qrCodeMessage.substring(qrCodeMessage.indexOf('?'));
+                    processParams(paramString);
+                } else {
+                    alert("非法的宿命凭证！");
+                }
+            },
+            (err) => {}
+        ).catch((err) => {
+            alert("无法调取摄像头，请确认浏览器有相机使用权限。");
+            readerDiv.style.display = "none";
+            document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
+        });
+    }
+
+    function processParams(queryString) {
+        const urlParams = new URLSearchParams(queryString);
+        const r = urlParams.get('r'); 
+        const t = urlParams.get('t'); 
+        const m = urlParams.get('m'); 
+        const re = urlParams.get('re'); 
+        const rh = urlParams.get('rh'); 
+
+        if (r && t) {
+            const rankMap = { "SSR": "SSR 阶 · 破晓之神", "SR": "SR 阶 · 星轨编织者", "A": "A 阶 · 密教执行官", "B": "B 阶 · 迷途观测者" };
+            const fullRank = rankMap[r] || r;
+            const tarotName = tarotNames[parseInt(t)] || "未知天命牌 (" + t + ")";
+
+            currentData = { rank: fullRank, tarot: tarotName, stats: `识:${m}pt / 疾:${re}ms / 律:${rh}%` };
+
+            const statusText = document.getElementById('parse-status');
+            statusText.innerText = "✦ 契约凭证解析成功 ✦";
+            statusText.style.color = "var(--green)";
+
+            const rankEl = document.getElementById('player-rank');
+            rankEl.innerText = fullRank;
+            rankEl.className = "val rank-" + r;
+
+            document.getElementById('player-tarot').innerText = tarotName;
+            document.getElementById('player-scores').innerText = currentData.stats;
+
+            document.getElementById('confirmBtn').disabled = false;
+        }
+    }
+
+    // ==================== 【特殊嘉宾模式】 ====================
+    function toggleGuestMode() {
+        const isGuestChecked = document.getElementById('isGuest').checked;
+        const countInput = document.getElementById('guestGiftCount');
         
-        let targetId = currentDayStockId; // 默认常规池
-        let currentCount = currentDayCount;
+        if (isGuestChecked) {
+            currentPool = 'guest';
+            document.querySelectorAll('.stock-card').forEach(c => c.classList.remove('active'));
+            document.getElementById('btn-guest').classList.add('active');
+            countInput.style.display = "block";
+        } else {
+            currentPool = 'day1';
+            document.querySelectorAll('.stock-card').forEach(c => c.classList.remove('active'));
+            document.getElementById('btn-day1').classList.add('active');
+            countInput.style.display = "none";
+            countInput.value = 1;
+        }
+    }
 
-        if (selectedPool === 'guest') {
-            targetId = "guest";
-            currentCount = guestCount;
+    // ==================== 【云端核销扣减动作】 ====================
+    async function executeVerification() {
+        if (!currentData) return;
+
+        let deductCount = 1;
+        const isGuestMode = document.getElementById('isGuest').checked;
+
+        if (isGuestMode) {
+            const inputCount = parseInt(document.getElementById('guestGiftCount').value);
+            if (isNaN(inputCount) || inputCount <= 0) {
+                alert("请输入合法的发放礼品数量！");
+                return;
+            }
+            deductCount = inputCount;
         }
 
-        if (currentCount <= 0) {
-            alert("⚠️ 圣殿警告：当前选中的盲盒礼品池已经没有库存了！无法执行核销。");
-            btn.disabled = false;
-            btn.innerText = "⚡ 确认裁决 · 扣除盲盒库存";
-            return;
+        // 重新同步一次最新库存，避免多人并发导致扣串
+        await fetchStocksFromCloud();
+
+        if (stocks[currentPool] < deductCount) {
+            const goAhead = confirm(`⚠️ 当前库存已不足！是否强制透支扣减？`);
+            if (!goAhead) return;
         }
 
-        const newCount = currentCount - 1;
+        const newCount = stocks[currentPool] - deductCount;
 
-        // 写入 Supabase 进行安全原子更新
-        const { error } = await _supabase
+        // 1. 同步扣减云端数据库数据
+        const { error: stockErr } = await _supabase
             .from('stocks')
             .update({ count: newCount })
-            .eq('id', targetId);
+            .eq('id', currentPool);
 
-        if (error) {
-            alert("❌ 核销失败，云端同步受阻: " + error.message);
-            btn.disabled = false;
-            btn.innerText = "⚡ 确认裁决 · 扣除盲盒库存";
-        } else {
-            alert(`🎉 核销成功！已成功扣除【${selectedPool === 'guest' ? '特别嘉宾池' : '今日常规池'}】盲盒 1 个。当前剩余：${newCount} 个。`);
-            btn.innerText = "✅ 核销完毕 · 已生效";
-            btn.style.background = "var(--success-green)";
-            btn.style.color = "#fff";
+        if (stockErr) {
+            alert("同步库存到云端失败: " + stockErr.message);
+            return;
         }
+
+        // 2. 将这次流水写入云端日志对账表
+        await _supabase.from('logs').insert([{
+            rank: currentData.rank,
+            tarot: currentData.tarot,
+            pool: currentPool,
+            count: deductCount
+        }]);
+
+        stocks[currentPool] = newCount;
+        updateStockUI();
+        logToHistory(currentData.rank, currentData.tarot, currentPool, deductCount);
+
+        alert(`🎉 云端核销成功！\n剩余库存实时广播已同步。`);
+
+        document.getElementById('confirmBtn').disabled = true;
+        document.getElementById('parse-status').innerText = "✅ 本张二维码已完成核销，请准备扫描下一位";
+        document.getElementById('parse-status').style.color = "#888";
     }
+
+    function logToHistory(rank, tarot, pool, count) {
+        const listContainer = document.getElementById('historyList');
+        if (listContainer.innerText.includes("暂无当前核销记录")) {
+            listContainer.innerHTML = "";
+        }
+        const time = new Date().toLocaleTimeString();
+        const poolNameMap = { day1: "第一天", day2: "第二天", guest: "特别嘉宾" };
+        const itemHtml = `
+            <div class="history-item">
+                <span>[${time}] <b>${rank}</b> (${tarot})</span>
+                <span style="color:var(--gold)">扣减【${poolNameMap[pool]}】共 ${count} 个</span>
+            </div>
+        `;
+        listContainer.innerHTML = itemHtml + listContainer.innerHTML;
+    }
+
+    window.onload = doAuthentication;
 </script>
 
 </body>
