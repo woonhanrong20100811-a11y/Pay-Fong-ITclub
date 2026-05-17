@@ -262,9 +262,9 @@
         <p class="subtitle">—— 宿命数据实验室 ——</p>
         
         <div class="live-stock-panel">
-            <div class="stock-title">✦ 圣殿盲盒礼品实时剩余 ✦</div>
+            <div class="stock-title" id="stock-panel-title">✦ 圣殿盲盒礼品实时剩余 ✦</div>
             <div class="stock-display-row">
-                <div class="stock-item">今日常规池: <span id="display-day">--</span> 个</div>
+                <div class="stock-item"><span id="display-day-label">今日常规池</span>: <span id="display-day">--</span> 个</div>
                 <div class="stock-item">特别嘉宾池: <span id="display-guest">--</span> 个</div>
             </div>
         </div>
@@ -373,6 +373,7 @@
 
     // ⚡【核心改造】：新增全局变量，用于承载云端实时读取的天数（默认 day1）
     let currentActiveDayId = "day1"; 
+    let globalStocksData = { day1: 0, day2: 0, guest: 0 }; // 缓存完整的云端库存字典
 
     window.onload = function() {
         // 启动完全由云端开关决定的智能库存识别系统
@@ -399,15 +400,16 @@
             // 3. 开启双轨实时监听
             _supabase
                 .channel('player-global-watch')
-                // 轨 A：监听库存变动
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, payload => {
-                    updateStockDisplay(payload.new.id, payload.new.count);
+                    // 当某一池的库存有变动时，实时更新本地字典并重新渲染
+                    globalStocksData[payload.new.id] = payload.new.count;
+                    renderStockUI();
                 })
-                // 轨 B：监听大本营天数切换（当后台把 value 从 day1 改成 day2 时，首页来宾端秒切换数据）
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, async (payload) => {
+                    // 当核心后台管理员切换天数按钮时
                     if (payload.new.id === 'current_active_day') {
                         currentActiveDayId = payload.new.value; // 捕获最新天数配置
-                        await fetchStockForPlayers(); // 瞬间重拉对应池库存
+                        renderStockUI(); // 瞬间重载界面显示
                     }
                 })
                 .subscribe();
@@ -420,21 +422,29 @@
         const { data, error } = await _supabase.from('stocks').select('*');
         if (!error && data) {
             data.forEach(item => {
-                updateStockDisplay(item.id, item.count);
+                globalStocksData[item.id] = item.count;
             });
+            renderStockUI();
         }
     }
 
-    function updateStockDisplay(id, count) {
-        // ⚡【精准修复】：抛弃原本的不稳定本地时间 Date().getDate()。
-        // 现在直接和全局的云端天数 currentActiveDayId 进行校对。
-        if (id === 'guest') {
-            const el = document.getElementById('display-guest');
-            if(el) el.innerText = count;
-        } else if (id === currentActiveDayId) {
-            const el = document.getElementById('display-day');
-            if(el) el.innerText = count;
+    // ⚡【精准渲染】：完全抛弃本地时间，完美校对云端设置的 Day1/Day2
+    function renderStockUI() {
+        // 更新常规池的数字和标签文字
+        const dayLabelEl = document.getElementById('display-day-label');
+        const dayNumEl = document.getElementById('display-day');
+        
+        if (currentActiveDayId === 'day1') {
+            if (dayLabelEl) dayLabelEl.innerText = "第一天常规池";
+            if (dayNumEl) dayNumEl.innerText = globalStocksData.day1;
+        } else {
+            if (dayLabelEl) dayLabelEl.innerText = "第二天常规池";
+            if (dayNumEl) dayNumEl.innerText = globalStocksData.day2;
         }
+
+        // 更新特别嘉宾池的数字
+        const guestNumEl = document.getElementById('display-guest');
+        if (guestNumEl) guestNumEl.innerText = globalStocksData.guest;
     }
 
     // ==================== 【天命主算法逻辑（原封不动）】 ====================
