@@ -16,6 +16,8 @@
             --card-bg: #1a1a22;
             --green: #2ecc71;
             --red: #e74c3c;
+            --purple: #9b59b6;
+            --orange: #e67e22;
         }
         body {
             background-color: var(--bg-dark);
@@ -69,7 +71,7 @@
             margin-top: 4px;
         }
 
-        /* 库存看板 (已合并为 2 列) */
+        /* 库存看板 (2 列布局) */
         .stock-board {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -98,6 +100,51 @@
             font-size: 1.8rem;
             font-weight: bold;
             color: #fff;
+        }
+
+        /* 🎛️ 新增：展出天数一键切换控制台样式 */
+        .day-control-box {
+            background: #0d0d11;
+            border: 1px solid rgba(194,159,100,0.3);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .day-control-title {
+            font-size: 0.9rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .day-btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .day-btn {
+            flex: 1;
+            padding: 10px;
+            background: #222;
+            color: #888;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .day-btn-1.active {
+            background: rgba(230, 126, 34, 0.2);
+            color: var(--orange);
+            border-color: var(--orange);
+            box-shadow: 0 0 8px rgba(230, 126, 34, 0.3);
+        }
+        .day-btn-2.active {
+            background: rgba(155, 89, 182, 0.2);
+            color: var(--purple);
+            border-color: var(--purple);
+            box-shadow: 0 0 8px rgba(155, 89, 182, 0.3);
         }
 
         /* 扫码互动功能区 */
@@ -256,6 +303,14 @@
         </div>
     </div>
 
+    <div class="day-control-box">
+        <div class="day-control-title">🔄 更改当前展出状态 (实时全场同步)</div>
+        <div class="day-btn-group">
+            <button id="day-btn-1" class="day-btn day-btn-1" onclick="cloudSwitchDay('day1')">展出：第一天 (Day 1)</button>
+            <button id="day-btn-2" class="day-btn day-btn-2" onclick="cloudSwitchDay('day2')">展出：第二天 (Day 2)</button>
+        </div>
+    </div>
+
     <div class="scanner-section">
         <button class="scan-btn" id="startScanBtn" onclick="startCameraScanner()">📷 开启摄像头原地扫码</button>
         <div id="reader"></div>
@@ -359,6 +414,36 @@
             .single();
         if (!error && data) {
             currentActiveDayId = data.value;
+            updateDayButtonsUI(data.value);
+        }
+    }
+
+    // 新增：直接通过按钮一键修改云端 config 天数
+    async function cloudSwitchDay(targetDayId) {
+        const { error } = await _supabase
+            .from('config')
+            .update({ value: targetDayId })
+            .eq('id', 'current_active_day');
+        
+        if (error) {
+            alert("切换失败，请检查 config 表结构与网络: " + error.message);
+        } else {
+            currentActiveDayId = targetDayId;
+            updateDayButtonsUI(targetDayId);
+            updateStockUI();
+        }
+    }
+
+    // 刷新控制天数按钮的高亮状态
+    function updateDayButtonsUI(activeDay) {
+        const btn1 = document.getElementById('day-btn-1');
+        const btn2 = document.getElementById('day-btn-2');
+        if (activeDay === 'day1') {
+            btn1.classList.add('active');
+            btn2.classList.remove('active');
+        } else {
+            btn2.classList.add('active');
+            btn1.classList.remove('active');
         }
     }
 
@@ -543,6 +628,10 @@
 
         rawStocks[targetDbPoolId] = newCount;
         updateStockUI();
+        
+        // 核心修复点：核销动作完成后，强制前端立刻对总人数进行重新抓取，防止因实时监听没开启导致人数卡死
+        await fetchTotalScannedCount(); 
+        
         logToHistory(currentData.rank, currentData.tarot, targetDbPoolId, deductCount);
 
         alert(`🎉 云端核销成功！\n剩余库存与全场人数广播已同步。`);
@@ -576,6 +665,7 @@
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, payload => {
                 if (payload.new.id === 'current_active_day') {
                     currentActiveDayId = payload.new.value;
+                    updateDayButtonsUI(payload.new.value);
                     updateStockUI();
                 }
             })
