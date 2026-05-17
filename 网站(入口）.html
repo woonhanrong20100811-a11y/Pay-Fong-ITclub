@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宿命法典 · 探索天命契约</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --gold: #c29f64;
+            --bg-dark: #121216;
+            --card-bg: #1a1a22;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: #e0e0e0;
+            font-family: 'Noto Serif SC', serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .player-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h1 {
+            color: var(--gold);
+            font-size: 1.6rem;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        /* 🔥 新增：实时动态云端库存看板样式 */
+        .live-stock-panel {
+            background: #0d0d11;
+            border: 1px dashed rgba(194,159,100,0.3);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 25px;
+        }
+        .stock-title {
+            font-size: 0.8rem;
+            color: var(--gold);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stock-display-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .stock-item {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        .stock-item span {
+            font-weight: bold;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        /* 游戏模拟测试触发按钮 */
+        .test-btn {
+            background: #4a0e0e;
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(74,14,14,0.4);
+            transition: all 0.2s;
+        }
+        .test-btn:hover {
+            background: #5c1414;
+            box-shadow: 0 4px 20px rgba(194,159,100,0.2);
+        }
+
+        /* 契约生成结果面板 */
+        .result-panel {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px double rgba(194,159,100,0.2);
+            display: none;
+        }
+        .result-title {
+            color: var(--gold);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        #qrcode {
+            display: inline-block;
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .notice-text {
+            font-size: 0.8rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+    <h1>宿命法典 · 试炼终端</h1>
+    <div class="subtitle">PEI FONG INFORMATION SOCIETY</div>
+
+    <div class="live-stock-panel">
+        <div class="stock-title">✦ 圣殿盲盒礼品实时剩余 ✦</div>
+        <div class="stock-display-row">
+            <div class="stock-item">今日常规池: <span id="display-day">--</span> 个</div>
+            <div class="stock-item">特别嘉宾池: <span id="display-guest">--</span> 个</div>
+        </div>
+    </div>
+
+    <button class="test-btn" onclick="simulateGameEnd()">⚡ 完成试炼 · 镌刻天命契约</button>
+
+    <div class="result-panel" id="resultPanel">
+        <div class="result-title">⚡ 契约已生成 ⚡</div>
+        <div id="qrcode"></div>
+        <p class="notice-text">
+            请立即对当前屏幕进行【截图保存】！<br>
+            携此天命凭证前往资讯社摊位，出示给工作人员扫码即可兑换属于你的试炼盲盒礼品。
+        </p>
+    </div>
+</div>
+
+<script>
+    // ==================== 【自动同步云端数据库配置】 ====================
+    const SUPABASE_URL = "https://eglmalfktjrrvkiolqrd.supabase.co"; 
+    const SUPABASE_KEY = "sb_publishable_H8C9O523vQl89-h-Y1Mj_A_7DjNCiQy"; 
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let qrcodeContainer = null;
+
+    window.onload = async function() {
+        // 1. 初始化拉取云端库存数据
+        await fetchStockForPlayers();
+
+        // 2. 开启实时监听！一旦工作人员在后台核销扣减了库存，来宾手机屏幕上的剩余数量会【秒级自动刷新】！
+        _supabase
+            .channel('player-watch')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, payload => {
+                updateStockDisplay(payload.new.id, payload.new.count);
+            })
+            .subscribe();
+    }
+
+    // 从云端获取实时库存
+    async function fetchStockForPlayers() {
+        const { data, error } = await _supabase.from('stocks').select('*');
+        if (!error && data) {
+            data.forEach(item => {
+                updateStockDisplay(item.id, item.count);
+            });
+        }
+    }
+
+    // 动态刷新前端看板
+    function updateStockDisplay(id, count) {
+        // 自动判定今天应该显示 Day1 还是 Day2 的常规库存
+        // 假设您的活动是 2026年5月25号（第一天），26号（第二天）
+        const todayDate = new Date().getDate();
+        let isDay2 = (todayDate === 26); 
+
+        if (id === 'guest') {
+            const el = document.getElementById('display-guest');
+            if(el) el.innerText = count;
+        } else if ((isDay2 && id === 'day2') || (!isDay2 && id === 'day1')) {
+            const el = document.getElementById('display-day');
+            if(el) el.innerText = count;
+        }
+    }
+
+    // ==================== 【模拟像素游戏结束，自动打包原始成绩数据】 ====================
+    function simulateGameEnd() {
+        // 1. 随机生成玩家成绩与天命段位（用于模拟现场 MakeCode 像素游戏结束后的数据）
+        const ranks = ["SSR", "SR", "A", "B"];
+        const randomRank = ranks[Math.floor(Math.random() * ranks.length)]; // 随机段位
+        const randomTarot = Math.floor(Math.random() * 78);                 // 随机 0-77 塔罗牌索引
+        const mockScore = Math.floor(Math.random() * 40) + 60;              // 模拟得分 60~100
+        const mockResponseTime = Math.floor(Math.random() * 300) + 150;     // 模拟疾速反应时间 ms
+        const mockRhythm = Math.floor(Math.random() * 30) + 70;             // 模拟音律准确率 %
+
+        // 2. 获取当前的公网访问主路径（自动适配不管你部署在 Vercel 还是 GitHub Pages）
+        const currentUrlBase = window.location.origin + window.location.pathname;
+        // 将路径中的 index.html 替换成工作人员端 staff.html，形成核销跳转闭环
+        const staffUrlBase = currentUrlBase.replace('index.html', '') + 'staff.html';
+
+        // 3. 构建无缝核销传参字符串 (r=段位, t=塔罗牌, m=得分, re=反应时, rh=准确率)
+        const scanPayloadUrl = `${staffUrlBase}?r=${randomRank}&t=${randomTarot}&m=${mockScore}&re=${mockResponseTime}&rh=${mockRhythm}`;
+
+        console.log("生成的核销跳转链接为: ", scanPayloadUrl);
+
+        // 4. 渲染二维码
+        document.getElementById('resultPanel').style.display = "block";
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = ""; // 清空旧码
+
+        qrcodeContainer = new QRCode(qrDiv, {
+            text: scanPayloadUrl,
+            width: 180,
+            height: 180,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H // 高容错率，方便手机镜头快速原地解析
+        });
+
+        // 滚屏动画跳转到二维码区域
+        document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
