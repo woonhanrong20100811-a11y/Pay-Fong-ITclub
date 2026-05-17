@@ -102,13 +102,14 @@
             color: #fff;
         }
 
-        /* 🎛️ 新增：展出天数一键切换控制台样式 */
+        /* 🎛️ 展出天数一键切换控制台样式 - 默认隐藏，高权限才显示 */
         .day-control-box {
             background: #0d0d11;
             border: 1px solid rgba(194,159,100,0.3);
             border-radius: 6px;
             padding: 15px;
             margin: 20px 0;
+            display: none; 
         }
         .day-control-title {
             font-size: 0.9rem;
@@ -288,7 +289,7 @@
     <h1>培风资讯社 · 核销主控台</h1>
 
     <div class="counter-box">
-        <div class="counter-title">✦ 当前现场已累计扫描核销人数 ✦</div>
+        <div class="counter-title">✦ 当前现场已累计扫描总人数 (扫码即计入) ✦</div>
         <div class="counter-num" id="total-scanned">0</div>
     </div>
 
@@ -303,8 +304,8 @@
         </div>
     </div>
 
-    <div class="day-control-box">
-        <div class="day-control-title">🔄 更改当前展出状态 (实时全场同步)</div>
+    <div class="day-control-box" id="adminDayControl">
+        <div class="day-control-title">🛡️ 更改当前展出状态 (核心管理权限)</div>
         <div class="day-btn-group">
             <button id="day-btn-1" class="day-btn day-btn-1" onclick="cloudSwitchDay('day1')">展出：第一天 (Day 1)</button>
             <button id="day-btn-2" class="day-btn day-btn-2" onclick="cloudSwitchDay('day2')">展出：第二天 (Day 2)</button>
@@ -357,22 +358,38 @@
 </div>
 
 <script>
-    // ==================== 【已自动绑定你的 Supabase 信息】 ====================
     const SUPABASE_URL = "https://eglmalfktjrrvkiolqrd.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_H8C9O523vQl89-h-Y1Mj_A_7DjNCiQy"; 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ==================== 【学号规格限制：XXXX-XXX 自动放行】 ====================
+    // ⚡ 核心分级权限控制
     function doAuthentication() {
-        let inputID = prompt("【安全御守】请输入工作人员学号以进入法典枢纽：");
+        // 允许进站核销的 15 人名单
+        const allowedStaff = [
+            "2025-183", "2025-328", "2025-323", "2024-158", "2024-074", 
+            "2023-254", "2024-039", "2023-037", "2023-257", "2022-232", 
+            "2022-247", "2022-107", "2022-351", "2021-109", "2021-122"
+        ];
+
+        // 👑 只有这些人可以更改天数
+        const superAdmins = ["2021-122", "2021-109", "2023-257", "2022-107"];
+
+        let inputID = prompt("【安全御守】请输入核心工作人员学号以授权访问：");
         if (inputID) {
             inputID = inputID.trim().replace(/\s+/g, ""); 
-            const idPattern = /^\d{4}-\d{3}$/; // 4位数字-3位数字 规格
-            if (idPattern.test(inputID)) {
+            
+            if (allowedStaff.includes(inputID)) {
+                // 通用放行
                 document.getElementById('mainHub').style.display = "block";
+                
+                // 【分权判断】如果是这4个学号之一，就向他们展示天数切换按钮
+                if (superAdmins.includes(inputID)) {
+                    document.getElementById('adminDayControl').style.display = "block";
+                }
+
                 initSystem();
             } else {
-                alert("学号不符合 XXXX-XXX 规格，拒绝访问！");
+                alert("身份校验失败：该学号不具备当前站点的访问授权！");
                 window.location.href = "about:blank";
             }
         } else {
@@ -380,10 +397,9 @@
         }
     }
 
-    // ==================== 【云端数据核心控制】 ====================
     let rawStocks = { day1: 0, day2: 0, guest: 0 }; 
-    let currentActiveDayId = 'day1'; // 由 config 表决定是 day1 还是 day2
-    let currentPool = 'current_day'; // 选择 'current_day' 或 'guest'
+    let currentActiveDayId = 'day1'; 
+    let currentPool = 'current_day'; 
     let currentData = null;   
     let html5QrcodeScanner = null; 
 
@@ -400,12 +416,9 @@
         await fetchStocksFromCloud();
         await fetchTotalScannedCount();
         processParams(window.location.search);
-        
-        // 开启全自动化云端实时变化监听
         setupRealtimeListeners();
     }
 
-    // 读取云端 config 天数配置
     async function fetchConfigFromCloud() {
         const { data, error } = await _supabase
             .from('config')
@@ -418,7 +431,6 @@
         }
     }
 
-    // 新增：直接通过按钮一键修改云端 config 天数
     async function cloudSwitchDay(targetDayId) {
         const { error } = await _supabase
             .from('config')
@@ -426,7 +438,7 @@
             .eq('id', 'current_active_day');
         
         if (error) {
-            alert("切换失败，请检查 config 表结构与网络: " + error.message);
+            alert("切换失败: " + error.message);
         } else {
             currentActiveDayId = targetDayId;
             updateDayButtonsUI(targetDayId);
@@ -434,7 +446,6 @@
         }
     }
 
-    // 刷新控制天数按钮的高亮状态
     function updateDayButtonsUI(activeDay) {
         const btn1 = document.getElementById('day-btn-1');
         const btn2 = document.getElementById('day-btn-2');
@@ -447,12 +458,11 @@
         }
     }
 
-    // 读取库存表
     async function fetchStocksFromCloud() {
         const { data, error } = await _supabase.from('stocks').select('*');
         if (error) {
             console.error("无法读取云端库存:", error);
-            document.getElementById('parse-status').innerText = "❌ 无法连接到云数据库，请检查 RLS 是否关闭！";
+            document.getElementById('parse-status').innerText = "❌ 无法连接到云数据库！";
             return;
         }
         data.forEach(item => { rawStocks[item.id] = item.count; });
@@ -461,7 +471,6 @@
         document.getElementById('parse-status').style.color = "var(--gold)";
     }
 
-    // 统计扫描总人数
     async function fetchTotalScannedCount() {
         const { count, error } = await _supabase
             .from('logs')
@@ -471,13 +480,9 @@
         }
     }
 
-    // 刷新核心看板数据显示
     function updateStockUI() {
-        // 渲染当天常规池对应的数据
-        document.getElementById('stock-current-day').innerText = rawStocks[currentActiveDayId];
-        // 渲染嘉宾池
-        document.getElementById('stock-guest').innerText = rawStocks.guest;
-        // 更新天数高亮标识
+        document.getElementById('stock-current-day').innerText = rawStocks[currentActiveDayId] !== undefined ? rawStocks[currentActiveDayId] : '--';
+        document.getElementById('stock-guest').innerText = rawStocks.guest !== undefined ? rawStocks.guest : '--';
         document.getElementById('env-tag').innerText = currentActiveDayId === 'day1' ? '第一天·Day 1' : '第二天·Day 2';
     }
 
@@ -495,7 +500,6 @@
         }
     }
 
-    // ==================== 【原生摄像头扫描解析】 ====================
     function startCameraScanner() {
         const readerDiv = document.getElementById('reader');
         readerDiv.style.display = "block";
@@ -529,7 +533,7 @@
         });
     }
 
-    function processParams(queryString) {
+    async function processParams(queryString) {
         const urlParams = new URLSearchParams(queryString);
         const r = urlParams.get('r'); 
         const t = urlParams.get('t'); 
@@ -545,7 +549,7 @@
             currentData = { rank: fullRank, tarot: tarotName, stats: `识:${m}pt / 疾:${re}ms / 律:${rh}%` };
 
             const statusText = document.getElementById('parse-status');
-            statusText.innerText = "✦ 契约凭证解析成功 ✦";
+            statusText.innerText = "✦ 契约凭证解析成功，已自动计入总人数 ✦";
             statusText.style.color = "var(--green)";
 
             const rankEl = document.getElementById('player-rank');
@@ -556,10 +560,19 @@
             document.getElementById('player-scores').innerText = currentData.stats;
 
             document.getElementById('confirmBtn').disabled = false;
+
+            const targetDbPoolId = (document.getElementById('isGuest').checked) ? 'guest' : currentActiveDayId;
+            await _supabase.from('logs').insert([{
+                rank: currentData.rank,
+                tarot: currentData.tarot,
+                pool: targetDbPoolId,
+                count: 0 
+            }]);
+            
+            await fetchTotalScannedCount();
         }
     }
 
-    // ==================== 【特殊嘉宾模式】 ====================
     function toggleGuestMode() {
         const isGuestChecked = document.getElementById('isGuest').checked;
         const countInput = document.getElementById('guestGiftCount');
@@ -578,7 +591,6 @@
         }
     }
 
-    // ==================== 【云端核销扣减动作】 ====================
     async function executeVerification() {
         if (!currentData) return;
 
@@ -594,20 +606,17 @@
             deductCount = inputCount;
         }
 
-        // 确定最终扣减哪一个物理表里的 ID
         const targetDbPoolId = (currentPool === 'guest') ? 'guest' : currentActiveDayId;
 
-        // 重新同步最新云端库存，防止并发覆盖
         await fetchStocksFromCloud();
 
         if (rawStocks[targetDbPoolId] < deductCount) {
-            const goAhead = confirm(`⚠️ 当前常规/嘉宾库存已不足！是否强制透支扣减？`);
+            const goAhead = confirm(`⚠️ 当前库存不足！是否强制透支扣减？`);
             if (!goAhead) return;
         }
 
         const newCount = rawStocks[targetDbPoolId] - deductCount;
 
-        // 1. 更新云端数据库对应的库存项
         const { error: stockErr } = await _supabase
             .from('stocks')
             .update({ count: newCount })
@@ -618,23 +627,12 @@
             return;
         }
 
-        // 2. 将这次流水写入云端日志对账表
-        await _supabase.from('logs').insert([{
-            rank: currentData.rank,
-            tarot: currentData.tarot,
-            pool: targetDbPoolId, // 存入具体的 day1/day2/guest 方便准确对账
-            count: deductCount
-        }]);
-
         rawStocks[targetDbPoolId] = newCount;
         updateStockUI();
         
-        // 核心修复点：核销动作完成后，强制前端立刻对总人数进行重新抓取，防止因实时监听没开启导致人数卡死
-        await fetchTotalScannedCount(); 
-        
         logToHistory(currentData.rank, currentData.tarot, targetDbPoolId, deductCount);
 
-        alert(`🎉 云端核销成功！\n剩余库存与全场人数广播已同步。`);
+        alert(`🎉 云端核销成功！礼品扣减已同步。`);
 
         document.getElementById('confirmBtn').disabled = true;
         document.getElementById('parse-status').innerText = "✅ 本张二维码已完成核销，请准备扫描下一位";
@@ -651,17 +649,15 @@
         const itemHtml = `
             <div class="history-item">
                 <span>[${time}] <b>${rank}</b> (${tarot})</span>
-                <span style="color:var(--gold)">扣减【${poolNameMap[poolField] || poolField}】共 ${count} 个</span>
+                <span style="color:var(--gold)">核销【${poolNameMap[poolField] || poolField}】发货 ${count} 个</span>
             </div>
         `;
         listContainer.innerHTML = itemHtml + listContainer.innerHTML;
     }
 
-    // ⚡ 核心机制：实时广播监听绑定
     function setupRealtimeListeners() {
         _supabase
             .channel('staff-hub-channel')
-            // A. 监听远程或后台随时对天数的微调
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, payload => {
                 if (payload.new.id === 'current_active_day') {
                     currentActiveDayId = payload.new.value;
@@ -669,12 +665,10 @@
                     updateStockUI();
                 }
             })
-            // B. 监听云端库存数值变动
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, payload => {
                 rawStocks[payload.new.id] = payload.new.count;
                 updateStockUI();
             })
-            // C. 监听有新的扫描数据产生 -> 全自动重算累计人数与流水
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'logs' }, async () => {
                 await fetchTotalScannedCount(); 
             })
