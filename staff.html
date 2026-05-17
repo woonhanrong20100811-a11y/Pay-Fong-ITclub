@@ -3,518 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宿命法典 · 核心核销枢纽</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <title>资讯社盲盒 - 工作人员控制台</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
         :root {
-            --gold: #c29f64;
-            --bg-dark: #121216;
-            --card-bg: #1a1a22;
-            --green: #2ecc71;
-            --red: #e74c3c;
+            --primary: #4a90e2;
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #ffffff;
+            --text-muted: #aaaaaa;
+            --border: #333333;
         }
+
         body {
-            background-color: var(--bg-dark);
-            color: #e0e0e0;
-            font-family: 'Noto Serif SC', serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
-        .staff-container {
+
+        .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* 📊 统计与当前状态面板 */
+        .status-panel {
             background: var(--card-bg);
-            border: 2px solid var(--gold);
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            box-sizing: border-box;
-            display: none; /* 验证成功前隐藏 */
-        }
-        h1 {
-            color: var(--gold);
-            text-align: center;
-            font-size: 1.8rem;
-            margin-top: 0;
-            border-bottom: 2px double rgba(194,159,100,0.3);
-            padding-bottom: 10px;
-        }
-        
-        /* 库存看板 */
-        .stock-board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .stock-card {
-            background: #22222c;
-            border: 1px solid rgba(194,159,100,0.2);
-            border-radius: 6px;
-            padding: 12px 5px;
-            text-align: center;
-            cursor: pointer;
-        }
-        .stock-card.active {
-            border-color: var(--gold);
-            background: rgba(194,159,100,0.1);
-            box-shadow: 0 0 10px rgba(194,159,100,0.2);
-        }
-        .stock-card h3 {
-            margin: 0 0 5px 0;
-            font-size: 0.85rem;
-            color: var(--gold);
-        }
-        .stock-num {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
 
-        /* 扫码互动功能区 */
-        .scanner-section {
-            background: #0d0d11;
-            border: 1px dashed rgba(194,159,100,0.4);
-            border-radius: 6px;
-            padding: 15px;
-            margin: 20px 0;
+        .counter-box {
             text-align: center;
-        }
-        .scan-btn {
-            background: #4a0e0e;
-            color: var(--gold);
-            border: 1px solid var(--gold);
-            padding: 12px 25px;
-            font-size: 1.05rem;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        #reader {
-            width: 100%;
-            max-width: 350px;
-            margin: 0 auto;
-            border-radius: 6px;
-            overflow: hidden;
-            display: none;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
         }
 
-        /* 扫描解析面板 */
-        .data-panel {
-            background: #0d0d11;
-            border-left: 4px solid var(--gold);
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 6px 6px 0;
+        .counter-num {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2ecc71; /* 翠绿色代表人数增长 */
+            margin-top: 5px;
         }
-        .data-row {
+
+        .stock-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
+            font-size: 15px;
+            padding: 4px 0;
         }
-        .data-row:last-child { margin-bottom: 0; }
-        .label { color: #888; }
-        .val { color: #fff; font-weight: bold; }
-        .val.rank-SSR { color: #ff4a4a; text-shadow: 0 0 5px rgba(255,74,74,0.3); }
-        .val.rank-SR { color: #ffaa00; }
 
-        /* 特别嘉宾勾选区 */
-        .guest-box {
-            background: rgba(231, 76, 60, 0.1);
-            border: 1px solid rgba(231, 76, 60, 0.3);
-            padding: 15px;
-            border-radius: 6px;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .stock-val {
+            font-weight: bold;
+            color: var(--primary);
         }
-        .guest-control {
+
+        /* 🎛️ 天数控制台 */
+        .control-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 16px;
             display: flex;
             align-items: center;
+            gap: 8px;
+        }
+
+        .btn-group {
+            display: flex;
             gap: 10px;
         }
-        .guest-box label {
-            font-weight: bold;
-            color: var(--red);
-            cursor: pointer;
-        }
-        .guest-box input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-        .guest-count-input {
-            width: 70px;
-            background: #222;
-            border: 1px solid var(--red);
-            color: white;
-            padding: 5px;
-            text-align: center;
-            border-radius: 4px;
-            font-size: 1rem;
-            display: none;
-        }
 
-        .action-btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            background: var(--gold);
-            color: #000;
+        button {
+            flex: 1;
+            padding: 12px;
             border: none;
-            border-radius: 6px;
-            font-size: 1.2rem;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-        .action-btn:hover { background: #dfb875; }
-        .action-btn:disabled {
-            background: #444;
-            color: #888;
-            cursor: not-allowed;
+            transition: all 0.2s;
         }
 
-        /* 历史记录 */
-        .history-section {
-            margin-top: 30px;
-            border-top: 1px dashed rgba(194,159,100,0.3);
-            padding-top: 15px;
-        }
-        .history-title {
-            font-size: 1rem;
-            color: var(--gold);
-            margin-bottom: 10px;
-        }
-        .history-list {
-            max-height: 150px;
+        .btn-day1 { background-color: #34495e; color: white; }
+        .btn-day2 { background-color: #34495e; color: white; }
+        
+        /* 激活状态样式 */
+        .btn-day1.active { background-color: #e67e22; box-shadow: 0 0 10px rgba(230,126,34,0.5); }
+        .btn-day2.active { background-color: #9b59b6; box-shadow: 0 0 10px rgba(155,89,182,0.5); }
+
+        /* 📋 实时扫描日志 */
+        .log-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 300px;
             overflow-y: auto;
-            background: #0d0d11;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
         }
-        .history-item {
-            padding: 5px 0;
-            border-bottom: 1px solid #222;
-            display: flex;
-            justify-content: space-between;
+
+        .log-item {
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+            color: #dddddd;
         }
+        .log-item:last-child { border-bottom: none; }
+        .log-time { color: var(--text-muted); margin-right: 8px; }
     </style>
 </head>
 <body>
 
-<div class="staff-container" id="mainHub">
-    <h1>培风资讯社 · 核销主控台</h1>
+    <div class="container">
+        <h2>资讯社盲盒控制台</h2>
+        <div class="subtitle">培风中学资讯社展览 · 工作人员端</div>
 
-    <div class="stock-board">
-        <div class="stock-card active" id="btn-day1" onclick="switchPool('day1')">
-            <h3>第一天库存</h3>
-            <div class="stock-num" id="stock-day1">--</div>
+        <div class="status-panel">
+            <div class="counter-box">
+                <div>👥 当前已扫描总人数</div>
+                <div class="counter-num" id="total-scanned">0</div>
+            </div>
+            
+            <div class="stock-row">
+                <span>当前环境：<span id="current-day-text" style="color: #f1c40f; font-weight: bold;">加载中...</span></span>
+            </div>
+            <div class="stock-row" style="margin-top: 8px;">
+                <span>今日常规池剩余：</span>
+                <span class="stock-val" id="stock-current-day">-- 个</span>
+            </div>
+            <div class="stock-row">
+                <span>特别嘉宾池剩余：</span>
+                <span class="stock-val" id="stock-guest" style="color: #e74c3c;">-- 个</span>
+            </div>
         </div>
-        <div class="stock-card" id="btn-day2" onclick="switchPool('day2')">
-            <h3>第二天库存</h3>
-            <div class="stock-num" id="stock-day2">--</div>
+
+        <div class="control-card">
+            <div class="card-title">🔄 一键切换展出天数 (当前云端控制)</div>
+            <div class="btn-group">
+                <button id="btn-day1" class="btn-day1" onclick="switchDay('day1')">第一天 (Day 1)</button>
+                <button id="btn-day2" class="btn-day2" onclick="switchDay('day2')">第二天 (Day 2)</button>
+            </div>
         </div>
-        <div class="stock-card" id="btn-guest" onclick="switchPool('guest')">
-            <h3>特别嘉宾池</h3>
-            <div class="stock-num" id="stock-guest">--</div>
+
+        <div class="log-card">
+            <div style="font-weight: bold; margin-bottom: 10px; font-size: 14px; color: var(--primary);">📝 实时扫描动态</div>
+            <div id="log-container">
+                <div class="log-item" style="color: var(--text-muted); text-align: center;">暂无扫描数据...</div>
+            </div>
         </div>
     </div>
 
-    <div class="scanner-section">
-        <button class="scan-btn" id="startScanBtn" onclick="startCameraScanner()">📷 开启摄像头原地扫码</button>
-        <div id="reader"></div>
-    </div>
+    <script>
+        // 初始化 Supabase 配置（请把这里的 URL 和 Key 换成你自己的）
+        const SUPABASE_URL = "https://你的SUPABASE_ID.supabase.co";
+        const SUPABASE_KEY = "你的ANON_KEY";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <div class="data-panel">
-        <div class="data-row">
-            <span class="label">解析状态：</span>
-            <span class="val" id="parse-status" style="color:var(--red)">等待云端同步及扫描数据...</span>
-        </div>
-        <div class="data-row">
-            <span class="label">玩家天命段位：</span>
-            <span class="val" id="player-rank">-</span>
-        </div>
-        <div class="data-row">
-            <span class="label">灵魂主控命牌：</span>
-            <span class="val" id="player-tarot">-</span>
-        </div>
-        <div class="data-row">
-            <span class="label">试炼原始成绩：</span>
-            <span class="val" id="player-scores">-</span>
-        </div>
-    </div>
+        let currentActiveDayId = 'day1'; // 缓存当前是第几天
 
-    <div class="guest-box">
-        <div style="display:flex; flex-direction:column;">
-            <label for="isGuest">✦ 激活特别嘉宾核销 ✦</label>
-            <span style="font-size:0.75rem; color:#aaa; margin-top:3px;">勾选后转入嘉宾通道，支持多发礼品</span>
-        </div>
-        <div class="guest-control">
-            <input type="checkbox" id="isGuest" onchange="toggleGuestMode()">
-            <input type="number" id="guestGiftCount" class="guest-count-input" value="1" min="1">
-        </div>
-    </div>
+        // 初始化加载所有数据
+        async function initStaffPanel() {
+            await fetchCurrentDayConfig();
+            await fetchRealtimeStock();
+            await fetchTotalScannedCount();
+            await fetchRecentLogs();
+            
+            // 开启 Supabase 实时监听机制 (Realtime)
+            setupRealtimeListeners();
+        }
 
-    <button class="action-btn" id="confirmBtn" onclick="executeVerification()" disabled>确认核销并发放礼品</button>
-
-    <div class="history-section">
-        <div class="history-title">🕒 现场成功核销流水 (最新5条)</div>
-        <div class="history-list" id="historyList">
-            <div style="color:#666; text-align:center; padding:10px;">暂无当前核销记录</div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ==================== 【已自动绑定你的 Supabase 信息】 ====================
-    const SUPABASE_URL = "https://eglmalfktjrrvkiolqrd.supabase.co"; 
-    const SUPABASE_KEY = "sb_publishable_H8C9O523vQl89-h-Y1Mj_A_7DjNCiQy"; 
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // ==================== 【学号规格限制：XXXX-XXX 自动放行】 ====================
-    function doAuthentication() {
-        let inputID = prompt("【安全御守】请输入工作人员学号以进入法典枢纽：");
-        if (inputID) {
-            inputID = inputID.trim().replace(/\s+/g, ""); 
-            const idPattern = /^\d{4}-\d{3}$/; // 4位数字-3位数字 规格
-            if (idPattern.test(inputID)) {
-                document.getElementById('mainHub').style.display = "block";
-                initSystem();
-            } else {
-                alert("学号不符合 XXXX-XXX 规格，拒绝访问！");
-                window.location.href = "about:blank";
+        // 1. 获取 config 表中当前激活的天数
+        async function fetchCurrentDayConfig() {
+            const { data, error } = await supabase
+                .from('config')
+                .select('*')
+                .eq('id', 'current_active_day')
+                .single();
+            
+            if (!error && data) {
+                currentActiveDayId = data.value;
+                updateDayUI(currentActiveDayId);
             }
-        } else {
-            window.location.href = "about:blank";
-        }
-    }
-
-    // ==================== 【云端数据核心控制】 ====================
-    let stocks = { day1: 0, day2: 0, guest: 0 }; 
-    let currentPool = 'day1'; 
-    let currentData = null;   
-    let html5QrcodeScanner = null; 
-
-    const tarotNames = [
-        "愚者", "魔术师", "女祭司", "皇后", "皇帝", "教皇", "恋人", "战车", "力量", "隐者", "命运之轮", "正义", "倒吊人", "死神", "节制", "恶魔", "塔", "星星", "月亮", "太阳", "审判", "世界",
-        "权杖 Ace", "权杖二", "权杖三", "权杖四", "权杖五", "权杖六", "权杖七", "权杖八", "权杖九", "权杖十", "权杖侍从", "权杖骑士", "权杖皇后", "权杖国王",
-        "圣杯 Ace", "圣杯二", "圣杯三", "圣杯四", "圣杯五", "圣杯六", "圣杯七", "圣杯八", "圣杯九", "圣杯十", "圣杯侍从", "圣杯骑士", "圣杯皇后", "圣杯国王",
-        "宝剑 Ace", "宝剑二", "宝剑三", "宝剑四", "宝剑五", "宝剑六", "宝剑七", "宝剑八", "宝剑九", "宝剑十", "宝剑侍从", "宝剑骑士", "宝剑皇后", "宝剑国王",
-        "钱币 Ace", "钱币二", "钱币三", "钱币四", "钱币五", "钱币六", "钱币七", "钱币八", "钱币九", "钱币十", "钱币侍从", "钱币骑士", "钱币皇后", "钱币国王"
-    ];
-
-    async function initSystem() {
-        await fetchStocksFromCloud();
-        processParams(window.location.search);
-        
-        // 开启云端实时监听：别人扣了库存，你的手机屏幕看板会秒同步刷新
-        _supabase
-            .channel('any')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, payload => {
-                stocks[payload.new.id] = payload.new.count;
-                updateStockUI();
-            })
-            .subscribe();
-    }
-
-    async function fetchStocksFromCloud() {
-        const { data, error } = await _supabase.from('stocks').select('*');
-        if (error) {
-            console.error("无法读取云端库存:", error);
-            document.getElementById('parse-status').innerText = "❌ 无法连接到云数据库，请检查 RLS 是否关闭！";
-            return;
-        }
-        data.forEach(item => { stocks[item.id] = item.count; });
-        updateStockUI();
-        document.getElementById('parse-status').innerText = "📡 云端同步就绪，等待捕获数据...";
-        document.getElementById('parse-status').style.color = "var(--gold)";
-    }
-
-    function updateStockUI() {
-        document.getElementById('stock-day1').innerText = stocks.day1;
-        document.getElementById('stock-day2').innerText = stocks.day2;
-        document.getElementById('stock-guest').innerText = stocks.guest;
-    }
-
-    function switchPool(poolName) {
-        if(document.getElementById('isGuest').checked) {
-            alert("当前正处于【特别嘉宾】模式，系统已强制锁定嘉宾专属池。");
-            return;
-        }
-        currentPool = poolName;
-        document.querySelectorAll('.stock-card').forEach(c => c.classList.remove('active'));
-        document.getElementById('btn-' + poolName).classList.add('active');
-    }
-
-    // ==================== 【原生摄像头扫描解析】 ====================
-    function startCameraScanner() {
-        const readerDiv = document.getElementById('reader');
-        readerDiv.style.display = "block";
-        document.getElementById('startScanBtn').innerText = "🔄 镜头扫描运行中...";
-
-        if (!html5QrcodeScanner) {
-            html5QrcodeScanner = new Html5Qrcode("reader");
         }
 
-        html5QrcodeScanner.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            (qrCodeMessage) => {
-                html5QrcodeScanner.stop().then(() => {
-                    readerDiv.style.display = "none";
-                    document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
-                });
+        // 2. 根据当前天数加载对应的当天库存和嘉宾库存
+        async function fetchRealtimeStock() {
+            const { data, error } = await supabase.from('stocks').select('*');
+            if (!error && data) {
+                // 特别嘉宾池
+                const guestItem = data.find(item => item.id === 'guest');
+                if (guestItem) document.getElementById('stock-guest').innerText = guestItem.count + " 个";
 
-                if (qrCodeMessage.includes('?')) {
-                    const paramString = qrCodeMessage.substring(qrCodeMessage.indexOf('?'));
-                    processParams(paramString);
-                } else {
-                    alert("非法的宿命凭证！");
+                // 动态获取当天常规池库存
+                const activeDayItem = data.find(item => item.id === currentActiveDayId);
+                if (activeDayItem) {
+                    document.getElementById('stock-current-day').innerText = activeDayItem.count + " 个";
                 }
-            },
-            (err) => {}
-        ).catch((err) => {
-            alert("无法调取摄像头，请确认浏览器有相机使用权限。");
-            readerDiv.style.display = "none";
-            document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
-        });
-    }
-
-    function processParams(queryString) {
-        const urlParams = new URLSearchParams(queryString);
-        const r = urlParams.get('r'); 
-        const t = urlParams.get('t'); 
-        const m = urlParams.get('m'); 
-        const re = urlParams.get('re'); 
-        const rh = urlParams.get('rh'); 
-
-        if (r && t) {
-            const rankMap = { "SSR": "SSR 阶 · 破晓之神", "SR": "SR 阶 · 星轨编织者", "A": "A 阶 · 密教执行官", "B": "B 阶 · 迷途观测者" };
-            const fullRank = rankMap[r] || r;
-            const tarotName = tarotNames[parseInt(t)] || "未知天命牌 (" + t + ")";
-
-            currentData = { rank: fullRank, tarot: tarotName, stats: `识:${m}pt / 疾:${re}ms / 律:${rh}%` };
-
-            const statusText = document.getElementById('parse-status');
-            statusText.innerText = "✦ 契约凭证解析成功 ✦";
-            statusText.style.color = "var(--green)";
-
-            const rankEl = document.getElementById('player-rank');
-            rankEl.innerText = fullRank;
-            rankEl.className = "val rank-" + r;
-
-            document.getElementById('player-tarot').innerText = tarotName;
-            document.getElementById('player-scores').innerText = currentData.stats;
-
-            document.getElementById('confirmBtn').disabled = false;
+            }
         }
-    }
 
-    // ==================== 【特殊嘉宾模式】 ====================
-    function toggleGuestMode() {
-        const isGuestChecked = document.getElementById('isGuest').checked;
-        const countInput = document.getElementById('guestGiftCount');
-        
-        if (isGuestChecked) {
-            currentPool = 'guest';
-            document.querySelectorAll('.stock-card').forEach(c => c.classList.remove('active'));
-            document.getElementById('btn-guest').classList.add('active');
-            countInput.style.display = "block";
-        } else {
-            currentPool = 'day1';
-            document.querySelectorAll('.stock-card').forEach(c => c.classList.remove('active'));
-            document.getElementById('btn-day1').classList.add('active');
-            countInput.style.display = "none";
-            countInput.value = 1;
+        // 3. 核心新增：统计 logs 表中的总扫描人数
+        async function fetchTotalScannedCount() {
+            // 使用 count: 'exact' 直接让数据库返回总行数，不浪费流量加载整张表
+            const { count, error } = await supabase
+                .from('logs')
+                .select('*', { count: 'exact', head: true });
+            
+            if (!error && count !== null) {
+                document.getElementById('total-scanned').innerText = count;
+            }
         }
-    }
 
-    // ==================== 【云端核销扣减动作】 ====================
-    async function executeVerification() {
-        if (!currentData) return;
+        // 4. 获取最近的 10 条扫描记录
+        async function fetchRecentLogs() {
+            const { data, error } = await supabase
+                .from('logs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            if (!error && data) {
+                renderLogs(data);
+            }
+        }
 
-        let deductCount = 1;
-        const isGuestMode = document.getElementById('isGuest').checked;
-
-        if (isGuestMode) {
-            const inputCount = parseInt(document.getElementById('guestGiftCount').value);
-            if (isNaN(inputCount) || inputCount <= 0) {
-                alert("请输入合法的发放礼品数量！");
+        // 渲染日志列表
+        function renderLogs(logs) {
+            const container = document.getElementById('log-container');
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="log-item" style="color: var(--text-muted); text-align: center;">暂无扫描数据...</div>`;
                 return;
             }
-            deductCount = inputCount;
+            container.innerHTML = logs.map(log => {
+                const timeStr = new Date(log.created_at).toLocaleTimeString('zh-CN', { hour12: false });
+                return `<div class="log-item">
+                    <span class="log-time">[${timeStr}]</span> 
+                    <strong>${log.student_id}</strong> 抽中了 <span style="color:#f1c40f;">${log.pool_type === 'guest' ? '特别嘉宾池' : '常规池'}</span>
+                </div>`;
+            }).join('');
         }
 
-        // 重新同步一次最新库存，避免多人并发导致扣串
-        await fetchStocksFromCloud();
+        // UI 按钮高亮与文字切换
+        function updateDayUI(activeDay) {
+            const btn1 = document.getElementById('btn-day1');
+            const btn2 = document.getElementById('btn-day2');
+            const dayText = document.getElementById('current-day-text');
 
-        if (stocks[currentPool] < deductCount) {
-            const goAhead = confirm(`⚠️ 当前库存已不足！是否强制透支扣减？`);
-            if (!goAhead) return;
+            if (activeDay === 'day1') {
+                btn1.classList.add('active');
+                btn2.classList.remove('active');
+                dayText.innerText = "第一天 (Day 1)";
+                dayText.style.color = "#e67e22";
+            } else {
+                btn2.classList.add('active');
+                btn1.classList.remove('active');
+                dayText.innerText = "第二天 (Day 2)";
+                dayText.style.color = "#9b59b6";
+            }
         }
 
-        const newCount = stocks[currentPool] - deductCount;
-
-        // 1. 同步扣减云端数据库数据
-        const { error: stockErr } = await _supabase
-            .from('stocks')
-            .update({ count: newCount })
-            .eq('id', currentPool);
-
-        if (stockErr) {
-            alert("同步库存到云端失败: " + stockErr.message);
-            return;
+        // 工作人员点击按钮：一键修改云端天数
+        async function switchDay(targetDay) {
+            const { error } = await supabase
+                .from('config')
+                .update({ value: targetDay })
+                .eq('id', 'current_active_day');
+            
+            if (error) {
+                alert("切换失败，请检查网络或配置：" + error.message);
+            }
+            // 提示：由于下面写了 Realtime 监听，这里不需要手动更新 UI，数据库变了前端会自动秒切
         }
 
-        // 2. 将这次流水写入云端日志对账表
-        await _supabase.from('logs').insert([{
-            rank: currentData.rank,
-            tarot: currentData.tarot,
-            pool: currentPool,
-            count: deductCount
-        }]);
-
-        stocks[currentPool] = newCount;
-        updateStockUI();
-        logToHistory(currentData.rank, currentData.tarot, currentPool, deductCount);
-
-        alert(`🎉 云端核销成功！\n剩余库存实时广播已同步。`);
-
-        document.getElementById('confirmBtn').disabled = true;
-        document.getElementById('parse-status').innerText = "✅ 本张二维码已完成核销，请准备扫描下一位";
-        document.getElementById('parse-status').style.color = "#888";
-    }
-
-    function logToHistory(rank, tarot, pool, count) {
-        const listContainer = document.getElementById('historyList');
-        if (listContainer.innerText.includes("暂无当前核销记录")) {
-            listContainer.innerHTML = "";
+        // ⚡ 实时监听：绑定 Supabase 广播，让控制台数据会“自己动”
+        function setupRealtimeListeners() {
+            supabase
+                .channel('staff-realtime-channel')
+                // 监听天数切换
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, async (payload) => {
+                    if (payload.new.id === 'current_active_day') {
+                        currentActiveDayId = payload.new.value;
+                        updateDayUI(currentActiveDayId);
+                        await fetchRealtimeStock(); // 天数变了，重新刷一下常规池对应的库存
+                    }
+                })
+                // 监听库存增减
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, (payload) => {
+                    if (payload.new.id === 'guest') {
+                        document.getElementById('stock-guest').innerText = payload.new.count + " 个";
+                    } else if (payload.new.id === currentActiveDayId) {
+                        document.getElementById('stock-current-day').innerText = payload.new.count + " 个";
+                    }
+                })
+                // 监听有人来扫描（新数据插入 logs 表）
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'logs' }, async () => {
+                    await fetchTotalScannedCount(); // 人数加 1，重新计算总数
+                    await fetchRecentLogs();        // 刷新下方滚动日志
+                    await fetchRealtimeStock();     // 顺便刷新一下库存减扣
+                })
+                .subscribe();
         }
-        const time = new Date().toLocaleTimeString();
-        const poolNameMap = { day1: "第一天", day2: "第二天", guest: "特别嘉宾" };
-        const itemHtml = `
-            <div class="history-item">
-                <span>[${time}] <b>${rank}</b> (${tarot})</span>
-                <span style="color:var(--gold)">扣减【${poolNameMap[pool]}】共 ${count} 个</span>
-            </div>
-        `;
-        listContainer.innerHTML = itemHtml + listContainer.innerHTML;
-    }
 
-    window.onload = doAuthentication;
-</script>
-
+        // 页面启动
+        window.onload = initStaffPanel;
+    </script>
 </body>
 </html>
