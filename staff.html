@@ -493,36 +493,34 @@
         }
     }
 
-    // 🚀 重新优化后的高清图像扫码对焦控制核心
+    // 🚀 修正后的后置镜头超清对焦控制核心
     function startCameraScanner() {
         const readerDiv = document.getElementById('reader');
         readerDiv.style.display = "block";
-        document.getElementById('startScanBtn').innerText = "🔄 镜头扫描运行中...";
+        document.getElementById('startScanBtn').innerText = "🔄 后置镜头扫描运行中...";
 
         if (!html5QrcodeScanner) {
             html5QrcodeScanner = new Html5Qrcode("reader");
         }
 
-        // 高性能扫描配置
+        // 高性能扫描配置，并利用 facingMode 将镜头强制锚定在后置主摄像头上
         const scanConfig = { 
-            fps: 15, // 提高采样率加速识别
+            fps: 15, 
             qrbox: function(viewfinderWidth, viewfinderHeight) {
-                // 动态计算扫码窗口大小，防止部分全面屏画面压缩拉伸导致变形
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
                 const edgeSize = Math.floor(minEdge * 0.75); 
                 return { width: edgeSize, height: edgeSize };
             },
             videoConstraints: {
-                mandatory: {
-                    maxWidth: 1280,   // 限制画面不过载，兼顾清晰度
-                    maxHeight: 720
-                },
-                optional: [{ minWidth: 640 }] // 强制保证最低分辨率，不让画面糊掉
+                facingMode: { exact: "environment" }, // 约束条件最顶层锁死后置，不给浏览器乱切前置的机会
+                maxWidth: 1280,   
+                maxHeight: 720
             }
         };
 
+        // 方案 A：进行严格的后置摄像头拉取
         html5QrcodeScanner.start(
-            { facingMode: "environment" }, // 强制调用手机后置镜头
+            { facingMode: "environment" }, 
             scanConfig,
             (qrCodeMessage) => {
                 html5QrcodeScanner.stop().then(() => {
@@ -538,12 +536,30 @@
                 }
             },
             (err) => {
-                // 自动忽略一秒内上百次“未捕捉到二维码”的底层警告，防止阻塞主线程导致的卡死
+                // 过滤多余高频报错
             }
         ).catch((err) => {
-            alert("无法调取摄像头！\n请检查：\n1. 网页是否是通过 HTTPS 访问\n2. 浏览器摄像头权限是否允许。\n具体错误: " + err);
-            readerDiv.style.display = "none";
-            document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
+            console.warn("标准后置模式挂起，启动兼容性后置通道...", err);
+            
+            // 方案 B：针对个别奇葩国产机浏览器内核的降级兼容配置（去掉 videoConstraints 的 exact 锁）
+            const fallbackConfig = {
+                fps: 15,
+                qrbox: (w, h) => { const m = Math.min(w, h); return { width: Math.floor(m*0.75), height: Math.floor(m*0.75) }; }
+            };
+            
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                fallbackConfig,
+                (qrCodeMessage) => {
+                    html5QrcodeScanner.stop().then(() => { readerDiv.style.display = "none"; });
+                    if (qrCodeMessage.includes('?')) processParams(qrCodeMessage.substring(qrCodeMessage.indexOf('?')));
+                },
+                (err) => {}
+            ).catch((fallbackErr) => {
+                alert("无法调取后置摄像头！\n请检查：\n1. 网页是否是通过 HTTPS 协议安全访问\n2. 浏览器设置里的摄像头相机权限是否已经允许。\n具体错误: " + fallbackErr);
+                readerDiv.style.display = "none";
+                document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
+            });
         });
     }
 
@@ -560,7 +576,6 @@
             const fullRank = rankMap[r] || r;
             const tarotName = tarotNames[parseInt(t)] || "未知天命牌 (" + t + ")";
 
-            // 数据写入本地临时缓存，点击确认再发往云端，彻底解决扫码即入库的问题
             currentData = { rank: fullRank, tarot: tarotName, stats: `识:${m}pt / 疾:${re}ms / 律:${rh}%` };
 
             const statusText = document.getElementById('parse-status');
@@ -634,7 +649,7 @@
             return;
         }
 
-        // 库存扣除成功后，顺理成章插入单次发放数量日志
+        // 插入流水日志
         const { error: logErr } = await _supabase.from('logs').insert([{
             rank: currentData.rank,
             tarot: currentData.tarot,
@@ -653,7 +668,7 @@
 
         alert(`🎉 云端核销成功！礼品扣减与流水日志已同步。`);
 
-        // 清空状态，静止单张二维码双击漏洞
+        // 清空状态，防刷
         document.getElementById('confirmBtn').disabled = true;
         document.getElementById('parse-status').innerText = "✅ 本张二维码已完成核销，请准备扫描下一位";
         document.getElementById('parse-status').style.color = "#888";
