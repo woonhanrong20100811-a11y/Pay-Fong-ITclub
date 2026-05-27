@@ -37,7 +37,7 @@
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             box-sizing: border-box;
-            display: none; /* 验证成功前隐藏 */
+            display: none;
         }
         h1 {
             color: var(--gold);
@@ -49,7 +49,6 @@
             margin-bottom: 15px;
         }
         
-        /* 👥 实时核销总人数看板 */
         .counter-box {
             text-align: center;
             background: #0d0d11;
@@ -71,7 +70,6 @@
             margin-top: 4px;
         }
 
-        /* 库存看板 (2 列布局) */
         .stock-board {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -102,7 +100,6 @@
             color: #fff;
         }
 
-        /* 🎛️ 展出天数一键切换控制台样式 */
         .day-control-box {
             background: #0d0d11;
             border: 1px solid rgba(194,159,100,0.3);
@@ -148,7 +145,6 @@
             box-shadow: 0 0 8px rgba(155, 89, 182, 0.3);
         }
 
-        /* 扫码互动功能区 */
         .scanner-section {
             background: #0d0d11;
             border: 1px dashed rgba(194,159,100,0.4);
@@ -178,7 +174,49 @@
             display: none;
         }
 
-        /* 扫描解析面板 */
+        .manual-input-box {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(194,159,100,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .manual-row {
+            display: flex;
+            gap: 8px;
+        }
+        .manual-input {
+            flex: 1;
+            background: #15151c;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.05rem;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        .manual-input:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+        .manual-btn {
+            background: #34495e;
+            color: #fff;
+            border: 1px solid var(--gold);
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .manual-btn:hover {
+            background: #2c3e50;
+        }
+
         .data-panel {
             background: #0d0d11;
             border-left: 4px solid var(--gold);
@@ -198,7 +236,6 @@
         .val.rank-SSR { color: #ff4a4a; text-shadow: 0 0 5px rgba(255,74,74,0.3); }
         .val.rank-SR { color: #ffaa00; }
 
-        /* 特别嘉宾勾选区 */
         .guest-box {
             background: rgba(231, 76, 60, 0.1);
             border: 1px solid rgba(231, 76, 60, 0.3);
@@ -256,7 +293,6 @@
             cursor: not-allowed;
         }
 
-        /* 历史记录 */
         .history-section {
             margin-top: 30px;
             border-top: 1px dashed rgba(194,159,100,0.3);
@@ -315,6 +351,16 @@
     <div class="scanner-section">
         <button class="scan-btn" id="startScanBtn" onclick="startCameraScanner()">📷 开启摄像头原地扫码</button>
         <div id="reader"></div>
+        
+        <div class="manual-input-box">
+            <div class="manual-row">
+                <input type="text" id="manualUrlInput" class="manual-input" placeholder="直接连打数字(如 11285 或 1128523098)">
+                <button class="manual-btn" onclick="processManualInput()">现场核销</button>
+            </div>
+            <span style="font-size: 0.75rem; color: #aaa; text-align: left; padding-left: 4px;">
+               💡 <b>盲打秘籍</b>：段位(1位)+牌号(2位)+识(2/3位)+疾+律。 1-SSR, 2-SR, 3-A, 4-B
+            </span>
+        </div>
     </div>
 
     <div class="data-panel">
@@ -362,12 +408,11 @@
     const SUPABASE_KEY = "sb_publishable_H8C9O523vQl89-h-Y1Mj_A_7DjNCiQy"; 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ⚡ 核心分级权限控制
     function doAuthentication() {
         const allowedStaff = [
             "2025-183", "2025-328", "2025-323", "2024-158", "2024-074", 
-            "2023-254", "2024-039", "2023-037", "2023-257", "2022-232", 
-            "2022-247", "2022-107", "2022-351", "2021-109", "2021-122"
+            "2024-039", "2023-037", "2023-257", "2022-232", "2022-247", 
+            "2022-107", "2022-351", "2021-109", "2021-122"
         ];
         const superAdmins = ["2021-122", "2021-109", "2023-257", "2022-107"];
 
@@ -493,7 +538,6 @@
         }
     }
 
-    // 🚀 修正后的后置镜头超清对焦控制核心
     function startCameraScanner() {
         const readerDiv = document.getElementById('reader');
         readerDiv.style.display = "block";
@@ -503,7 +547,6 @@
             html5QrcodeScanner = new Html5Qrcode("reader");
         }
 
-        // 高性能扫描配置，并利用 facingMode 将镜头强制锚定在后置主摄像头上
         const scanConfig = { 
             fps: 15, 
             qrbox: function(viewfinderWidth, viewfinderHeight) {
@@ -511,14 +554,9 @@
                 const edgeSize = Math.floor(minEdge * 0.75); 
                 return { width: edgeSize, height: edgeSize };
             },
-            videoConstraints: {
-                facingMode: { exact: "environment" }, // 约束条件最顶层锁死后置，不给浏览器乱切前置的机会
-                maxWidth: 1280,   
-                maxHeight: 720
-            }
+            videoConstraints: { facingMode: { exact: "environment" }, maxWidth: 1280, maxHeight: 720 }
         };
 
-        // 方案 A：进行严格的后置摄像头拉取
         html5QrcodeScanner.start(
             { facingMode: "environment" }, 
             scanConfig,
@@ -527,40 +565,100 @@
                     readerDiv.style.display = "none";
                     document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
                 });
-
                 if (qrCodeMessage.includes('?')) {
-                    const paramString = qrCodeMessage.substring(qrCodeMessage.indexOf('?'));
-                    processParams(paramString);
+                    processParams(qrCodeMessage.substring(qrCodeMessage.indexOf('?')));
                 } else {
                     alert("非法的宿命凭证！\n识别到的原始文本为: " + qrCodeMessage);
                 }
             },
-            (err) => {
-                // 过滤多余高频报错
-            }
+            (err) => {}
         ).catch((err) => {
-            console.warn("标准后置模式挂起，启动兼容性后置通道...", err);
-            
-            // 方案 B：针对个别奇葩国产机浏览器内核的降级兼容配置（去掉 videoConstraints 的 exact 锁）
-            const fallbackConfig = {
-                fps: 15,
-                qrbox: (w, h) => { const m = Math.min(w, h); return { width: Math.floor(m*0.75), height: Math.floor(m*0.75) }; }
-            };
-            
+            const fallbackConfig = { fps: 15, qrbox: (w, h) => { const m = Math.min(w, h); return { width: Math.floor(m*0.75), height: Math.floor(m*0.75) }; } };
             html5QrcodeScanner.start(
-                { facingMode: "environment" }, 
-                fallbackConfig,
+                { facingMode: "environment" }, fallbackConfig,
                 (qrCodeMessage) => {
                     html5QrcodeScanner.stop().then(() => { readerDiv.style.display = "none"; });
                     if (qrCodeMessage.includes('?')) processParams(qrCodeMessage.substring(qrCodeMessage.indexOf('?')));
-                },
-                (err) => {}
-            ).catch((fallbackErr) => {
-                alert("无法调取后置摄像头！\n请检查：\n1. 网页是否是通过 HTTPS 协议安全访问\n2. 浏览器设置里的摄像头相机权限是否已经允许。\n具体错误: " + fallbackErr);
+                }, (err) => {}
+            ).catch((fErr) => {
+                alert("无法调取镜头！请直接让对方结果中的纯数字盲打入框。");
                 readerDiv.style.display = "none";
                 document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
             });
         });
+    }
+
+    // 🌟 核心升级：支持完全无下划线、空格等任何分隔符的纯快捷盲打解析
+    function processManualInput() {
+        let inputVal = document.getElementById('manualUrlInput').value.trim();
+        if (!inputVal) {
+            alert("请输入核销凭证内容！");
+            return;
+        }
+
+        // 1. 标准 URL 解析兼容保持不变
+        if (inputVal.includes('?')) {
+            processParams(inputVal.substring(inputVal.indexOf('?')));
+            document.getElementById('manualUrlInput').value = ""; 
+            return;
+        } else if (inputVal.includes('r=') && inputVal.includes('t=')) {
+            processParams('?' + inputVal);
+            document.getElementById('manualUrlInput').value = "";
+            return;
+        }
+
+        // 2. 将用户输入转化为只有字母或数字的纯连续字符串
+        let cleanStr = inputVal.replace(/[_\-\s]+/g, ""); 
+        
+        if (cleanStr.length >= 3) {
+            // 切割第 1 位：段位代码
+            let rawRankCode = cleanStr.charAt(0);
+            let rankStr = "";
+            if (rawRankCode === "1" || rawRankCode.toUpperCase() === "SSR") rankStr = "SSR";
+            else if (rawRankCode === "2" || rawRankCode.toUpperCase() === "SR") rankStr = "SR";
+            else if (rawRankCode === "3" || rawRankCode.toUpperCase() === "A") rankStr = "A";
+            else if (rawRankCode === "4" || rawRankCode.toUpperCase() === "B") rankStr = "B";
+
+            // 提取后面剩余的所有数字
+            let numPart = cleanStr.substring(1);
+
+            if (rankStr && numPart.length >= 2) {
+                // 前两位一定是牌号（00-81）
+                let tarotId = parseInt(numPart.substring(0, 2), 10);
+                let scoreStr = numPart.substring(2);
+
+                // 根据你发来的 5 项格式规范（段位_牌号_识_疾_律），动态拆解后续连打数字
+                let score = "0";
+                let re = "0";
+                let rh = "100";
+
+                if (scoreStr.length > 0) {
+                    if (scoreStr.length <= 3) {
+                        // 如果剩下1-3位，全部归属于【识pt】(如 85 或 100)
+                        score = scoreStr;
+                    } else {
+                        // 超过3位说明包含了【疾】与【律】，自适应切片取值
+                        score = scoreStr.substring(0, 2); 
+                        let remaining = scoreStr.substring(2);
+                        if (remaining.length >= 3) {
+                            re = remaining.substring(0, remaining.length - 2); 
+                            rh = remaining.substring(remaining.length - 2); 
+                        } else {
+                            re = remaining;
+                        }
+                    }
+                }
+
+                if (!isNaN(tarotId)) {
+                    let generatedQuery = `?r=${rankStr}&t=${tarotId}&m=${score}&re=${re}&rh=${rh}`;
+                    processParams(generatedQuery);
+                    document.getElementById('manualUrlInput').value = ""; 
+                    return;
+                }
+            }
+        }
+
+        alert("识读失败！请输入正确长度的数字串。\n例如：11285（代表 SSR，12号牌，85分）");
     }
 
     function processParams(queryString) {
@@ -576,7 +674,7 @@
             const fullRank = rankMap[r] || r;
             const tarotName = tarotNames[parseInt(t)] || "未知天命牌 (" + t + ")";
 
-            currentData = { rank: fullRank, tarot: tarotName, stats: `识:${m}pt / 疾:${re}ms / 律:${rh}%` };
+            currentData = { rank: fullRank, tarot: tarotName, stats: `识:${m||0}pt / 疾:${re||0}ms / 律:${rh||0}%` };
 
             const statusText = document.getElementById('parse-status');
             statusText.innerText = "✦ 契约凭证解析成功，请确认下方信息并点击核销 ✦";
@@ -628,7 +726,6 @@
 
         const targetDbPoolId = (currentPool === 'guest') ? 'guest' : currentActiveDayId;
 
-        // 重新拉云端，避免并发冲突
         await fetchStocksFromCloud();
 
         if (rawStocks[targetDbPoolId] < deductCount) {
@@ -638,7 +735,6 @@
 
         const newCount = rawStocks[targetDbPoolId] - deductCount;
 
-        // 更新数据库库存
         const { error: stockErr } = await _supabase
             .from('stocks')
             .update({ count: newCount })
@@ -649,7 +745,6 @@
             return;
         }
 
-        // 插入流水日志
         const { error: logErr } = await _supabase.from('logs').insert([{
             rank: currentData.rank,
             tarot: currentData.tarot,
@@ -668,7 +763,6 @@
 
         alert(`🎉 云端核销成功！礼品扣减与流水日志已同步。`);
 
-        // 清空状态，防刷
         document.getElementById('confirmBtn').disabled = true;
         document.getElementById('parse-status').innerText = "✅ 本张二维码已完成核销，请准备扫描下一位";
         document.getElementById('parse-status').style.color = "#888";
