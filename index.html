@@ -418,9 +418,7 @@
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 25px;">
-            <span id="download-pdf-btn" style="font-size: 0.8rem; color: #666; text-decoration: underline; cursor: pointer; letter-spacing: 1px;" onclick="downloadPurePDF()">✦ 拓印留存 (生成PDF法典报告)</span>
-        </div>
+        <button id="download-pdf-btn" class="mystic-btn" style="background:#1c3d27; border-color:#418255;" onclick="downloadPurePDF()">✦ 拓印留存 (下载PDF报告) ✦</button>
         <button class="mystic-btn" style="background:transparent; opacity:0.6; font-size:1.1rem;" onclick="nextStep(0)">重新解构</button>
     </div>
 </div>
@@ -531,7 +529,7 @@
     // ==================== 【大白话塔罗牌库特性完全解构表】 ====================
     const TAROT_EXPLAIN_MAP = {
         "愚者": { keyword: "自由、直觉、冒险", desc: "你是个不喜欢被规矩绑死的人。比起死记硬背或按部就班，你更相信自己的直觉。在没有约束的环境下，你的反应和思维会变得特别灵活，能爆发出让人意想不到的创造力！" },
-        "魔术师": { keyword: "创造、技巧、主动", desc: "你很聪明，学东西非常快，掌握新技能或新游戏对你来说轻而易举。你的反应敏捷，手脑协调能力好，能够把生活里的各种资源 and 规则玩弄于股掌之间。" },
+        "魔术师": { keyword: "创造、技巧、主动", desc: "你很聪明，学东西非常快，掌握新技能或新游戏对你来说轻而易举。你的反应敏捷，手脑协调能力好，能够把生活里的各种资源和规则玩弄于股掌之间。" },
         "女祭司": { keyword: "记忆、静止、直觉", desc: "你的大脑就像高清监控器，记忆力非常惊人！你看过的细节、别人说过的话，都会像照片一样存进脑海。你习惯静坐观察，能一眼看穿别人露出的逻辑漏洞。" },
         "皇后": { keyword: "丰富、包容、感性", desc: "你拥有极强的感知力和包容心。在节奏和人际相处上，你非常温和自然，让人觉得很舒服。你习惯用感性和生活经验去面对测试，心态稳健。" },
         "皇帝": { keyword: "控制、秩序、威严", desc: "你是个天生的指挥官，有着强烈的掌控欲。你最喜欢规规矩矩、有条不紊的事情。不论是测反应还是测节奏，你都习惯强行把它们控制在你的安全感范围内。" },
@@ -555,7 +553,7 @@
         
         "权杖": { keyword: "行动力、激情", desc: "你抽到了充满火能量的权杖牌。这说明你是个行动派，意志力非常顽强，一旦决定要做一件事就会立刻上手，性格直爽、执行力拉满！" },
         "圣杯": { keyword: "灵性、情感", desc: "你抽到了充满水能量的圣杯牌。这说明你的直觉 and 灵性非常强，心思非常细腻敏感，做事情很讲究“感觉”和情绪共鸣。" },
-        "宝剑": { keyword: "冷静、果断", desc: "你抽到了充满风能量的宝剑牌。这说明你是个绝对冷静理智的人，能够切断多余的纠结，思维像刀刃一样锋利，擅长用最理性的逻辑解决问题。" },
+        "宝剑": { keyword: "冷静、果断", desc: "你抽到了充满风能量的宝剑牌.这说明你是个绝对冷静理智的人，能够切断多余的纠结，思维像刀刃一样锋利，擅长用最理性的逻辑解决问题。" },
         "钱币": { keyword: "稳健、务实", desc: "你抽到了充满土能量的钱币牌。这说明你做事特别踏实稳重，非常有耐心，能够抗住枯燥的练习，一步一个脚印地去沉淀自己的硬实力。" }
     };
 
@@ -576,17 +574,17 @@
             SR: {
                 title: "【高阶位格：星轨缝隙的规则游侠】",
                 backlash: "由于体内的能量过于厚重、行事严谨，你往往太害怕走错一步所带来的不确定性，导致你经常在反复的自我审视与风险评估中，白白错失了最佳的出手时机和反转命运的机会。",
-                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重的能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
+                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
             },
             A: {
                 title: "【均衡位格：厚重如山的深渊守护者】",
-                backlash: "Due to your energy being too heavy and rigorous, you often fear the uncertainty of taking a wrong step, leading you to waste perfect moments for action during repeated self-examination and risk assessment.",
-                fate: "You are an indispensable anchor in a turbulent era. When extreme crises hit and others panic from sensory overload, your heavy anchorage keeps you absolutely silent and clear-headed. When everything falls apart, your decisive action will directly rewrite reality and rebuild order."
+                backlash: "由于体内的能量过于厚重、行事严谨，你往往太害怕走错一步所带来的不确定性，导致你经常在反复的自我审视与风险评估中，白白错失了最佳的出手时机和反转命运的机会。",
+                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重的能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
             },
             B: {
                 title: "【秘境位格：执掌混沌的异类观测者】",
-                backlash: "Due to your energy being too heavy and rigorous, you often fear the uncertainty of taking a wrong step, leading you to waste perfect moments for action during repeated self-examination and risk assessment.",
-                fate: "You are an indispensable anchor in a turbulent era. When extreme crises hit and others panic from sensory overload, your heavy anchorage keeps you absolutely silent and clear-headed. When everything falls apart, your decisive action will directly rewrite reality and rebuild order."
+                backlash: "由于体内的能量过于厚重、行事严谨，你往往太害怕走错一步所带来的不确定性，导致你经常在反复的自我审视与风险评估中，白白错失了最佳的出手时机和反转命运的机会。",
+                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重的能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
             }
         }
     };
@@ -821,16 +819,22 @@
         }
     }
 
-    // ==================== 【PDF 下载留存模块-修复版】 ====================
+    // ==================== 【PDF 下载留存模块 - 修复空白Bug版】 ====================
     function downloadPurePDF() {
         const btn = document.getElementById('download-pdf-btn');
-        const originalText = btn.innerText;
-        btn.innerText = "✦ 法典拓印中...";
-        btn.style.pointerEvents = "none"; // 防止重复点击
+        btn.innerText = "✦ 法典拓印中... ✦";
+        btn.disabled = true;
 
         const originalCard = document.getElementById('main_report_card');
-        
-        // 1. 创建一个在屏幕外可见但用户看不到的临时容器，不能用 display: none
+        const cloneCard = originalCard.cloneNode(true);
+
+        const qrcodeBox = cloneCard.querySelector('.qrcode-box');
+        if (qrcodeBox) {
+            qrcodeBox.remove();
+        }
+
+        // 关键修复点：不再使用带有 display:none 样式的 id="pdf-clone-template"
+        // 改为创建一个绝对定位到视口之外的可视化节点，确保 html2pdf 能完美捕捉渲染数据
         const pdfWrapper = document.createElement('div');
         pdfWrapper.style.position = 'absolute';
         pdfWrapper.style.left = '-9999px'; 
@@ -838,21 +842,9 @@
         pdfWrapper.style.width = '480px'; 
         pdfWrapper.style.padding = '25px';
         pdfWrapper.style.background = '#0a0a0c'; 
-        pdfWrapper.style.boxSizing = 'border-box';
-
-        // 2. 深度克隆原始卡片
-        const cloneCard = originalCard.cloneNode(true);
-
-        // 3. 移除克隆体中的二维码区域（因为不需要在导出的PDF中展示）
-        const qrcodeBox = cloneCard.querySelector('.qrcode-box');
-        if (qrcodeBox) {
-            qrcodeBox.remove();
-        }
-
         pdfWrapper.appendChild(cloneCard);
         document.body.appendChild(pdfWrapper);
 
-        // 4. 配置 html2pdf 参数
         const options = {
             margin:       10,
             filename:     `灵魂法典_${currentRankGlobal}_报告.pdf`,
@@ -860,25 +852,24 @@
             html2canvas:  { 
                 scale: 2,           
                 useCORS: true,      
-                backgroundColor: '#0a0a0c',
-                logging: false
+                backgroundColor: '#0a0a0c' 
             },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // 5. 执行导出，确保图片和字体有足够的时间载入
+        // 增加一个短暂的宏任务延迟，防止复杂样式未加载完成
         setTimeout(() => {
             html2pdf().set(options).from(pdfWrapper).save().then(() => {
-                btn.innerText = originalText;
-                btn.style.pointerEvents = "auto";
+                btn.innerText = "✦ 拓印留存 (下载PDF报告) ✦";
+                btn.disabled = false;
                 pdfWrapper.remove(); 
             }).catch(err => {
                 alert("PDF 拓印生成失败: " + err.message);
-                btn.innerText = originalText;
-                btn.style.pointerEvents = "auto";
+                btn.innerText = "✦ 拓印留存 (下载PDF报告) ✦";
+                btn.disabled = false;
                 if(pdfWrapper) pdfWrapper.remove();
             });
-        }, 100);
+        }, 50);
     }
 </script>
 
