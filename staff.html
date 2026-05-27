@@ -358,7 +358,7 @@
                 <button class="manual-btn" onclick="processManualInput()">现场核销</button>
             </div>
             <span style="font-size: 0.75rem; color: #aaa; text-align: left; padding-left: 4px;">
-               💡 <b>盲打秘籍</b>：段位(1位)+牌号(2位)+识(2/3位)+疾+律。 1-SSR, 2-SR, 3-A, 4-B
+                💡 <b>盲打秘籍</b>：段位(1位)+牌号(2位)+识(2/3位)+疾+律。 1-SSR, 2-SR, 3-A, 4-B
             </span>
         </div>
     </div>
@@ -538,23 +538,31 @@
         }
     }
 
+    // 🌟 核心调优：注入 30fps 极速刷新、1080P 高清原图、连续自动对焦机制
     function startCameraScanner() {
         const readerDiv = document.getElementById('reader');
         readerDiv.style.display = "block";
-        document.getElementById('startScanBtn').innerText = "🔄 后置镜头扫描运行中...";
+        document.getElementById('startScanBtn').innerText = "🔄 连续高清自动对焦运行中...";
 
         if (!html5QrcodeScanner) {
             html5QrcodeScanner = new Html5Qrcode("reader");
         }
 
         const scanConfig = { 
-            fps: 15, 
+            fps: 30,  // 🌟 从 15 帧提升到 30 帧，消除抖动残影
             qrbox: function(viewfinderWidth, viewfinderHeight) {
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                const edgeSize = Math.floor(minEdge * 0.75); 
+                const edgeSize = Math.floor(minEdge * 0.85); // 🌟 稍微扩宽扫描检测窗口
                 return { width: edgeSize, height: edgeSize };
             },
-            videoConstraints: { facingMode: { exact: "environment" }, maxWidth: 1280, maxHeight: 720 }
+            // 🌟 解锁手机原生超清画质 + 开启底层连续自动聚焦 (continuous focus)
+            videoConstraints: { 
+                facingMode: { exact: "environment" }, 
+                width: { ideal: 1920, min: 1280 },
+                height: { ideal: 1080, min: 720 },
+                focusMode: { ideal: "continuous" },
+                whiteBalanceMode: { ideal: "continuous" }
+            }
         };
 
         html5QrcodeScanner.start(
@@ -573,7 +581,8 @@
             },
             (err) => {}
         ).catch((err) => {
-            const fallbackConfig = { fps: 15, qrbox: (w, h) => { const m = Math.min(w, h); return { width: Math.floor(m*0.75), height: Math.floor(m*0.75) }; } };
+            // 降级柔性处理
+            const fallbackConfig = { fps: 30, qrbox: (w, h) => { const m = Math.min(w, h); return { width: Math.floor(m*0.85), height: Math.floor(m*0.85) }; } };
             html5QrcodeScanner.start(
                 { facingMode: "environment" }, fallbackConfig,
                 (qrCodeMessage) => {
@@ -581,14 +590,13 @@
                     if (qrCodeMessage.includes('?')) processParams(qrCodeMessage.substring(qrCodeMessage.indexOf('?')));
                 }, (err) => {}
             ).catch((fErr) => {
-                alert("无法调取镜头！请直接让对方结果中的纯数字盲打入框。");
+                alert("无法调取高清后置镜头！请让对方展示结果并使用下方纯数字盲打。");
                 readerDiv.style.display = "none";
                 document.getElementById('startScanBtn').innerText = "📷 开启摄像头原地扫码";
             });
         });
     }
 
-    // 🌟 核心升级：支持完全无下划线、空格等任何分隔符的纯快捷盲打解析
     function processManualInput() {
         let inputVal = document.getElementById('manualUrlInput').value.trim();
         if (!inputVal) {
@@ -596,7 +604,6 @@
             return;
         }
 
-        // 1. 标准 URL 解析兼容保持不变
         if (inputVal.includes('?')) {
             processParams(inputVal.substring(inputVal.indexOf('?')));
             document.getElementById('manualUrlInput').value = ""; 
@@ -607,11 +614,9 @@
             return;
         }
 
-        // 2. 将用户输入转化为只有字母或数字的纯连续字符串
         let cleanStr = inputVal.replace(/[_\-\s]+/g, ""); 
         
         if (cleanStr.length >= 3) {
-            // 切割第 1 位：段位代码
             let rawRankCode = cleanStr.charAt(0);
             let rankStr = "";
             if (rawRankCode === "1" || rawRankCode.toUpperCase() === "SSR") rankStr = "SSR";
@@ -619,25 +624,20 @@
             else if (rawRankCode === "3" || rawRankCode.toUpperCase() === "A") rankStr = "A";
             else if (rawRankCode === "4" || rawRankCode.toUpperCase() === "B") rankStr = "B";
 
-            // 提取后面剩余的所有数字
             let numPart = cleanStr.substring(1);
 
             if (rankStr && numPart.length >= 2) {
-                // 前两位一定是牌号（00-81）
                 let tarotId = parseInt(numPart.substring(0, 2), 10);
                 let scoreStr = numPart.substring(2);
 
-                // 根据你发来的 5 项格式规范（段位_牌号_识_疾_律），动态拆解后续连打数字
                 let score = "0";
                 let re = "0";
                 let rh = "100";
 
                 if (scoreStr.length > 0) {
                     if (scoreStr.length <= 3) {
-                        // 如果剩下1-3位，全部归属于【识pt】(如 85 或 100)
                         score = scoreStr;
                     } else {
-                        // 超过3位说明包含了【疾】与【律】，自适应切片取值
                         score = scoreStr.substring(0, 2); 
                         let remaining = scoreStr.substring(2);
                         if (remaining.length >= 3) {
