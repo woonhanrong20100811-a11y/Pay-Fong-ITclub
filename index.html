@@ -1,1557 +1,880 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
     <title>人格解码站 | 培风资讯社</title>
-
     
-
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-
         :root {
-
             --ancient-gold: #c29f64;
-
             --deep-ink: #0f0f14;
-
             --blood-dark: #4a0e0e;
-
             --paper: #d8c8b8;
-
         }
-
-
 
         body {
-
             background: #0a0a0c radial-gradient(circle at center, #1e1e26 0%, #0a0a0c 100%);
-
             color: var(--paper);
-
             font-family: 'Noto Serif SC', serif;
-
             margin: 0;
-
             padding: 0;
-
             display: flex;
-
             justify-content: center;
-
             min-height: 100vh;
-
             overflow-x: hidden;
-
         }
-
-
 
         .container {
-
             width: 100%;
-
             max-width: 480px;
-
-            padding: 40px 25px;
-
+            padding: 30px 20px;
             box-sizing: border-box;
-
             border-left: 2px solid rgba(194, 159, 100, 0.2);
-
             border-right: 2px solid rgba(194, 159, 100, 0.2);
-
             position: relative;
-
         }
-
-
 
         h1 {
-
             font-family: 'Ma Shan Zheng', cursive, serif;
-
-            font-size: 2.6rem;
-
+            font-size: 2.4rem;
             text-align: center;
-
             color: var(--ancient-gold);
-
             margin: 0;
-
             text-shadow: 0 0 15px rgba(194, 159, 100, 0.3);
-
         }
-
-
 
         .subtitle {
-
             font-size: 0.8rem;
-
             text-align: center;
-
             letter-spacing: 4px;
-
             color: var(--ancient-gold);
-
             opacity: 0.7;
-
-            margin-bottom: 40px;
-
+            margin-bottom: 30px;
         }
-
-
 
         .live-stock-panel {
-
             background: rgba(0, 0, 0, 0.5);
-
             border: 1px dashed rgba(194, 159, 100, 0.3);
-
             border-radius: 8px;
-
-            padding: 15px;
-
-            margin-bottom: 30px;
-
+            padding: 12px;
+            margin-bottom: 25px;
             box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
-
         }
-
+        
         .stock-display-row {
-
             display: flex;
-
             justify-content: space-around;
-
             align-items: center;
-
         }
-
+        
         .stock-item {
-
             font-size: 0.85rem;
-
             color: #bbb;
-
         }
-
+        
         .stock-item span {
-
             font-weight: bold;
-
             color: #fff;
-
             font-size: 1.1rem;
-
             text-shadow: 0 0 8px rgba(255,255,255,0.4);
-
         }
-
-
 
         .step {
-
             display: none; 
-
             opacity: 0;
-
+            transition: opacity 0.3s ease;
         }
-
-
 
         .step.active { 
-
             display: block !important; 
-
             opacity: 1 !important;
-
         }
-
-
 
         .input-ritual-box {
-
             background: rgba(0, 0, 0, 0.4);
-
             border: 1px solid rgba(194, 159, 100, 0.3);
-
-            padding: 20px;
-
+            padding: 18px;
             border-radius: 8px;
-
-            margin-bottom: 25px;
-
+            margin-bottom: 20px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-
         }
-
-
 
         label {
-
             display: block;
-
-            font-size: 0.9rem;
-
+            font-size: 0.85rem;
             color: var(--ancient-gold);
-
-            margin-bottom: 12px;
-
+            margin-bottom: 10px;
             font-weight: bold;
-
         }
-
-
 
         input {
-
             width: 100%;
-
             background: transparent;
-
             border: none;
-
             border-bottom: 1px solid var(--ancient-gold);
-
             color: white;
-
-            padding: 10px 5px;
-
-            font-size: 1.1rem;
-
+            padding: 8px 5px;
+            font-size: 1.05rem;
             font-family: inherit;
-
             outline: none;
-
             box-sizing: border-box;
-
         }
-
-
 
         input:focus {
-
             border-bottom: 2px solid white;
-
             background: rgba(194, 159, 100, 0.05);
-
         }
-
-
 
         .tarot-numbers {
-
             display: flex;
-
-            gap: 15px;
-
+            gap: 12px;
             justify-content: space-between;
-
         }
-
-
 
         .tarot-numbers input {
-
             text-align: center;
-
-            font-size: 1.5rem;
-
+            font-size: 1.3rem;
             color: var(--ancient-gold);
-
         }
-
-
 
         .mystic-btn {
-
             display: block;
-
-            width: 100%;
-
-            padding: 18px;
-
+            width: 85%;
+            max-width: 280px;
+            margin: 15px auto 0 auto;
+            padding: 12px 10px;
             background: var(--blood-dark);
-
             color: var(--ancient-gold);
-
             border: 1px solid var(--ancient-gold);
-
             font-family: 'Ma Shan Zheng', cursive, serif;
-
-            font-size: 1.5rem;
-
+            font-size: 1.25rem;
             letter-spacing: 2px;
-
             cursor: pointer;
-
-            margin-top: 20px;
-
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-
-            transition: background 0.1s;
-
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
-
+            text-align: center;
         }
-
-
 
         .mystic-btn:active {
-
             background: var(--ancient-gold);
-
             color: black;
-
         }
 
+        /* 第三阶段：全新精致化、极简一小行字样式的下载触发文本 */
+        .pdf-text-link {
+            display: block;
+            width: fit-content;
+            margin: 25px auto 10px auto;
+            background: none;
+            border: none;
+            color: var(--ancient-gold);
+            font-family: inherit;
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            cursor: pointer;
+            opacity: 0.75;
+            transition: opacity 0.2s, color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
 
+        .pdf-text-link:active {
+            opacity: 1;
+            color: #fff;
+        }
 
         .game-tag {
-
             font-size: 0.7rem;
-
             color: #888;
-
             margin-top: 5px;
-
         }
-
-
 
         .report-card {
-
             background: rgba(15, 15, 20, 0.95);
-
             border: 2px solid var(--ancient-gold);
-
             border-radius: 12px;
-
-            padding: 30px 20px;
-
+            padding: 25px 18px;
             box-shadow: 0 0 30px rgba(194, 159, 100, 0.2);
-
-            margin-bottom: 30px;
-
+            margin-bottom: 20px;
         }
-
-
 
         .rank-title {
-
             text-align: center;
-
-            font-size: 1.8rem;
-
+            font-size: 1.7rem;
             color: #ff4a4a;
-
             font-weight: bold;
-
-            letter-spacing: 3px;
-
-            margin-bottom: 25px;
-
+            letter-spacing: 2px;
+            margin-bottom: 20px;
             text-shadow: 0 0 10px rgba(255, 74, 74, 0.4);
-
         }
-
-
-
-        /* 卡牌立绘展示区域样式 */
 
         .card-visual-container {
-
             text-align: center;
-
-            margin-bottom: 25px;
-
+            margin-bottom: 20px;
             position: relative;
-
         }
-
+        
         .card-visual-img {
-
             width: 100%;
-
-            max-width: 280px;
-
+            max-width: 240px;
             border-radius: 10px;
-
             box-shadow: 0 0 20px rgba(194, 159, 100, 0.4);
-
             border: 1px solid rgba(194, 159, 100, 0.6);
-
-            transition: all 0.3s ease;
-
         }
-
-
 
         .report-item {
-
             border-bottom: 1px dashed rgba(194, 159, 100, 0.2);
-
-            padding: 12px 0;
-
+            padding: 10px 0;
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
-
         }
-
-
 
         .report-item:last-child { border: none; }
 
-
-
         .item-label {
-
             color: var(--ancient-gold);
-
-            font-size: 0.9rem;
-
+            font-size: 0.85rem;
         }
-
-
 
         .item-val {
-
             color: #fff;
-
             font-weight: bold;
-
-            font-size: 1rem;
-
+            font-size: 0.95rem;
         }
-
-
 
         .destiny-text {
-
             background: rgba(194, 159, 100, 0.04);
-
             border-left: 3px solid var(--ancient-gold);
-
-            padding: 15px;
-
-            font-size: 0.9rem;
-
-            line-height: 1.8;
-
+            padding: 12px;
+            font-size: 0.88rem;
+            line-height: 1.7;
             color: #ccc;
-
-            margin-top: 25px;
-
+            margin-top: 20px;
             text-align: justify;
-
         }
-
-
 
         .qrcode-box {
-
-            margin-top: 35px;
-
-            padding-top: 25px;
-
+            margin-top: 30px;
+            padding-top: 20px;
             border-top: 2px double rgba(194, 159, 100, 0.3);
-
             text-align: center;
-
         }
-
+        
         .qrcode-title {
-
-            font-size: 1.05rem;
-
+            font-size: 1rem;
             color: var(--ancient-gold);
-
             letter-spacing: 2px;
-
             margin-bottom: 5px;
-
             font-weight: bold;
-
         }
-
+        
         .qrcode-hint {
-
-            font-size: 0.75rem;
-
+            font-size: 0.72rem;
             color: #999;
-
-            margin-bottom: 18px;
-
+            margin-bottom: 15px;
         }
-
+        
         #qrcode-container {
-
             display: inline-block;
-
-            padding: 10px;
-
+            padding: 8px;
             background: white;
-
             border-radius: 6px;
-
             box-shadow: 0 0 25px rgba(0,0,0,0.7);
-
         }
-
-        /* 隐藏码文本样式 */
-
+        
         .qrcode-code-display {
-
-            margin-top: 15px;
-
-            font-size: 0.95rem;
-
+            margin-top: 12px;
+            font-size: 0.9rem;
             color: var(--ancient-gold);
-
             letter-spacing: 1.5px;
-
             font-weight: bold;
-
             line-height: 1.6;
-
         }
-
+        
         .qrcode-code-val {
-
             display: block;
-
-            font-size: 1.25rem;
-
+            font-size: 1.2rem;
             color: #fff;
-
             text-shadow: 0 0 8px rgba(194, 159, 100, 0.6);
-
-            margin-top: 5px;
-
+            margin-top: 4px;
             letter-spacing: 2px;
-
         }
-
     </style>
-
 </head>
-
 <body>
 
-
-
 <div class="container">
-
     <div class="step active" id="step0">
-
         <h1 style="margin-top: 50px;">人格解码站</h1>
-
         <p class="subtitle">—— 培风资讯社 ——</p>
-
         
-
-        <p style="text-align: center; line-height: 2; color: var(--ancient-gold); font-size: 1.05rem; letter-spacing: 1px; font-weight: bold; margin-bottom: 40px; text-shadow: 0 0 10px rgba(194, 159, 100, 0.2);">
-
+        <p style="text-align: center; line-height: 2; color: var(--ancient-gold); font-size: 1.02rem; letter-spacing: 1px; font-weight: bold; margin-bottom: 40px; text-shadow: 0 0 10px rgba(194, 159, 100, 0.2);">
             欢迎来到数据与命运的交织之地。<br>
-
             请点击下方按钮。<br>开启属于你的灵魂解构仪式。
-
         </p>
-
-
 
         <button class="mystic-btn" onclick="nextStep(1)">开始探索</button>
 
-
-
         <div class="live-stock-panel" style="background: none; border: none; box-shadow: none; margin-top: 20px; margin-bottom: 0; padding: 5px;">
-
             <div class="stock-display-row" style="justify-content: center; gap: 8px; font-size: 0.8rem; color: #888;">
-
-                <span id="stock-panel-title" style="color: #888; letter-spacing: 1px;">✦</span>
-
-                <div class="stock-item" style="font-size: 0.8rem; color: #888;">
-
-                    <span id="display-day-label" style="font-size: 0.8rem; color: #888; font-weight: normal; text-shadow: none;">今日礼品</span>: 
-
-                    <span id="display-day" style="font-size: 0.95rem; color: var(--ancient-gold); font-weight: bold; text-shadow: 0 0 5px rgba(194,159,100,0.4);">--</span> 个
-
-                </div>
-
                 <span style="color: #888; letter-spacing: 1px;">✦</span>
-
+                <div class="stock-item" style="font-size: 0.8rem; color: #888;">
+                    <span id="display-day-label" style="font-size: 0.8rem; color: #888; font-weight: normal; text-shadow: none;">今日礼品</span>: 
+                    <span id="display-day" style="font-size: 0.95rem; color: var(--ancient-gold); font-weight: bold; text-shadow: 0 0 5px rgba(194,159,100,0.4);">--</span> 个
+                </div>
+                <span style="color: #888; letter-spacing: 1px;">✦</span>
             </div>
-
         </div>
-
     </div>
-
-
 
     <div class="step" id="step1">
-
         <h1>建立契约</h1>
-
         <p class="subtitle">第一阶段：契约</p>
 
-
-
         <div class="input-ritual-box">
-
             <label>「生辰」</label>
-
             <input type="text" id="birthdate" placeholder="请填写格式如：1913-07-07" inputmode="numeric">
-
         </div>
-
-
 
         <div class="input-ritual-box">
-
             <label>「三位天命」输入抽得的牌面编号 (0-77)</label>
-
             <div class="tarot-numbers">
-
                 <input type="number" id="t1" placeholder="Ⅰ" min="0" max="77">
-
                 <input type="number" id="t2" placeholder="Ⅱ" min="0" max="77">
-
                 <input type="number" id="t3" placeholder="Ⅲ" min="0" max="77">
-
             </div>
-
         </div>
-
-
 
         <button class="mystic-btn" onclick="checkStep1()">同步星轨</button>
-
     </div>
-
-
 
     <div class="step" id="step2">
-
         <h1>提取试炼</h1>
-
         <p class="subtitle">第二阶段：试炼</p>
 
-
-
         <div class="input-ritual-box">
-
             <label>「记」记忆测试</label>
-
             <input type="number" id="score_memory" placeholder="输入最终得分">
-
             <div class="game-tag">记忆精确度测试</div>
-
         </div>
 
-
-
         <div class="input-ritual-box">
-
             <label>「速」反应试炼 (毫秒)</label>
-
             <input type="number" id="score_reaction" placeholder="输入反应毫秒">
-
             <div class="game-tag">反应时间感知</div>
-
         </div>
-
-
 
         <div class="input-ritual-box">
-
             <label>「律」节奏准度 (%)</label>
-
             <input type="number" id="score_rhythm" placeholder="输入准度百分比 (%)">
-
             <div class="game-tag">节奏同步率</div>
-
         </div>
-
-
 
         <button class="mystic-btn" onclick="generateFate()">解析灵魂报告</button>
-
     </div>
-
-
 
     <div class="step" id="step3">
-
         <h1>灵魂法典</h1>
-
         <p class="subtitle">第三阶段：灵魂编码</p>
-
         
-
-        <div class="report-card">
-
+        <div class="report-card" id="main_report_card">
             <div class="rank-title" id="fate_rank">【加载中...】</div>
 
-
-
             <div class="card-visual-container">
-
                 <img id="fate_card_img" class="card-visual-img" src="" alt="命运卡牌立绘">
-
             </div>
 
-
-
             <div class="report-item">
-
                 <span class="item-label">✦ 星轨锚定 (星座)</span>
-
                 <span class="item-val" id="res_constellation">-</span>
-
             </div>
-
             <div class="report-item">
-
                 <span class="item-label">✦ 灵魂主控牌 (塔罗)</span>
-
                 <span class="item-val" id="res_tarot">-</span>
-
             </div>
-
             <div class="report-item">
-
                 <span class="item-label">✦ 灵视精度 (记忆力)</span>
-
                 <span class="item-val" id="res_memory">-</span>
-
             </div>
-
             <div class="report-item">
-
                 <span class="item-label">✦ 瞬动神速 (反应力)</span>
-
                 <span class="item-val" id="res_reaction">-</span>
-
             </div>
-
             <div class="report-item">
-
                 <span class="item-label">✦ 神圣律动 (节奏感)</span>
-
                 <span class="item-val" id="res_rhythm">-</span>
-
             </div>
-
-
 
             <div class="destiny-text" id="res_desc">
-
                 正在窥探命运的丝线...
-
             </div>
 
-
-
-            <div class="qrcode-box">
-
+            <div class="qrcode-box" id="pdf-exclude-qrcode">
                 <div class="qrcode-title">✦ ✦ 契约核销印记 ✦ ✦</div>
-
                 <div class="qrcode-hint">请向现场培风工作人员出示此码领取礼物</div>
-
                 <div id="qrcode-container"></div>
-
                 <div class="qrcode-code-display" id="qrcode-code-box">
-
                     ✦ 契约核销码 ✦
-
                     <span class="qrcode-code-val" id="qrcode-code-text">-</span>
-
                 </div>
-
             </div>
-
         </div>
 
-
-
-        <button class="mystic-btn" onclick="nextStep(0)">重新解构</button>
-
+        <button id="download-pdf-btn" class="pdf-text-link" onclick="downloadPurePDF()">✦ 拓印留存 (下载灵魂法典 PDF) ✦</button>
+        
+        <button class="mystic-btn" style="background:transparent; opacity:0.6; font-size:1.1rem; border:none; box-shadow:none; margin-top:5px;" onclick="nextStep(0)">重新解构</button>
     </div>
-
 </div>
 
-
-
 <script>
-
-    // ==================== 【Supabase 云端实时初始化连接】 ====================
-
+    // ==================== 【Supabase 云端实时同步模块】 ====================
     const SUPABASE_URL = "https://eglmalfktjrrvkiolqrd.supabase.co"; 
-
     const SUPABASE_KEY = "sb_publishable_H8C9O523vQl89-h-Y1Mj_A_7DjNCiQy"; 
-
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-
-
     let currentActiveDayId = "day1"; 
-
     let globalStocksData = { day1: 0, day2: 0, guest: 0 }; 
 
-
-
     window.onload = function() {
-
         initSmartStockSystem();
-
     }
 
-
-
     async function initSmartStockSystem() {
-
         try {
-
             const { data: configData, error: configErr } = await _supabase
-
                 .from('config')
-
                 .select('value')
-
                 .eq('id', 'current_active_day')
-
                 .single();
 
-
-
             if (!configErr && configData) {
-
                 currentActiveDayId = configData.value; 
-
             }
-
-
 
             await fetchStockForPlayers();
 
-
-
             _supabase
-
                 .channel('player-global-watch')
-
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, payload => {
-
                     globalStocksData[payload.new.id] = payload.new.count;
-
                     renderStockUI();
-
                 })
-
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'config' }, async (payload) => {
-
                     if (payload.new.id === 'current_active_day') {
-
                         currentActiveDayId = payload.new.value; 
-
                         renderStockUI(); 
-
                     }
-
                 })
-
                 .subscribe();
-
         } catch (err) {
-
             console.error("云端实时同步系统初始化异常:", err);
-
         }
-
     }
-
-
 
     async function fetchStockForPlayers() {
-
         const { data, error } = await _supabase.from('stocks').select('*');
-
         if (!error && data) {
-
             data.forEach(item => {
-
                 globalStocksData[item.id] = item.count;
-
             });
-
             renderStockUI();
-
         }
-
     }
-
-
 
     function renderStockUI() {
-
         const dayLabelEl = document.getElementById('display-day-label');
-
         const dayNumEl = document.getElementById('display-day');
-
         
-
         if (currentActiveDayId === 'day1') {
-
             if (dayLabelEl) dayLabelEl.innerText = "第一天礼品";
-
             if (dayNumEl) dayNumEl.innerText = globalStocksData.day1;
-
         } else {
-
             if (dayLabelEl) dayLabelEl.innerText = "第二天礼品";
-
             if (dayNumEl) dayNumEl.innerText = globalStocksData.day2;
-
         }
-
-
-
-        const guestNumEl = document.getElementById('display-guest');
-
-        if (guestNumEl) guestNumEl.innerText = globalStocksData.guest;
-
     }
 
-
-
-    // ==================== 【天命主算法逻辑】 ====================
-
+    // ==================== 【大阿卡纳与小阿卡纳天命全映射数据库】 ====================
     const tarotDatabase = [
-
         { name: "愚者 (The Fool)" }, { name: "魔术师 (The Magician)" }, { name: "女祭司 (The High Priestess)" },
-
         { name: "皇后 (The Empress)" }, { name: "皇帝 (The Emperor)" }, { name: "教皇 (The Hierophant)" },
-
         { name: "恋人 (The Lovers)" }, { name: "战车 (The Chariot)" }, { name: "力量 (Strength)" },
-
         { name: "隐者 (The Hermit)" }, { name: "命运之轮 (The Wheel of Fortune)" }, { name: "正义 (Justice)" },
-
         { name: "倒吊人 (The Hanged Man)" }, { name: "死神 (Death)" }, { name: "节制 (Temperance)" },
-
         { name: "恶魔 (The Devil)" }, { name: "塔 (The Tower)" }, { name: "星星 (The Star)" },
-
         { name: "月亮 (The Moon)" }, { name: "太阳 (The Sun)" }, { name: "审判 (Judgement)" },
-
         { name: "世界 (The World)" },
-
         { name: "权杖 Ace (Ace of Wands)" }, { name: "权杖二 (Two of Wands)" }, { name: "权杖三 (Three of Wands)" },
-
         { name: "权杖四 (Four of Wands)" }, { name: "权杖五 (Five of Wands)" }, { name: "权杖六 (Six of Wands)" },
-
         { name: "权杖七 (Seven of Wands)" }, { name: "权杖八 (Eight of Wands)" }, { name: "权杖九 (Nine of Wands)" },
-
         { name: "权杖十 (Ten of Wands)" }, { name: "权杖侍从 (Page of Wands)" }, { name: "权杖骑士 (Knight of Wands)" },
-
         { name: "权杖皇后 (Queen of Wands)" }, { name: "权杖国王 (King of Wands)" },
-
         { name: "圣杯 Ace (Ace of Cups)" }, { name: "圣杯二 (Two of Cups)" }, { name: "圣杯三 (Three of Cups)" },
-
         { name: "圣杯四 (Four of Cups)" }, { name: "圣杯五 (Five of Cups)" }, { name: "圣杯六 (Six of Cups)" },
-
         { name: "圣杯七 (Seven of Cups)" }, { name: "圣杯八 (Eight of Cups)" }, { name: "圣杯九 (Nine of Cups)" },
-
         { name: "圣杯十 (Ten of Cups)" }, { name: "圣杯侍从 (Page of Cups)" }, { name: "圣杯骑士 (Knight of Cups)" },
-
         { name: "圣杯皇后 (Queen of Cups)" }, { name: "圣杯国王 (King of Cups)" },
-
         { name: "宝剑 Ace (Ace of Swords)" }, { name: "宝剑二 (Two of Swords)" }, { name: "宝剑三 (Three of Swords)" },
-
-        { name: "宝剑四 (Four of Swords)" }, { name: "宝剑五 (Five of Swords)" }, { name: "宝剑六 (Six of Swords)" },
-
+        { name: "宝剑 four (Four of Swords)" }, { name: "宝剑五 (Five of Swords)" }, { name: "宝剑六 (Six of Swords)" },
         { name: "宝剑七 (Seven of Swords)" }, { name: "宝剑八 (Eight of Swords)" }, { name: "宝剑九 (Nine of Swords)" },
-
         { name: "宝剑十 (Ten of Swords)" }, { name: "宝剑侍从 (Page of Swords)" }, { name: "宝剑骑士 (Knight of Swords)" },
-
         { name: "宝剑皇后 (Queen of Swords)" }, { name: "宝剑国王 (King of Swords)" },
-
         { name: "钱币 Ace (Ace of Pentacles)" }, { name: "钱币二 (Two of Pentacles)" }, { name: "钱币三 (Three of Pentacles)" },
-
-        { name: "钱币四 (Four of Pentacles)" }, { name: "钱币五 (Five of Pentacles)" }, { name: "钱币六 (Six of Pentacles)" },
-
+        { name: "钱币 four (Four of Pentacles)" }, { name: "钱币五 (Five of Pentacles)" }, { name: "钱币六 (Six of Pentacles)" },
         { name: "钱币七 (Seven of Pentacles)" }, { name: "钱币八 (Eight of Pentacles)" }, { name: "钱币九 (Nine of Pentacles)" },
-
         { name: "钱币十 (Ten of Pentacles)" }, { name: "钱币侍从 (Page of Pentacles)" }, { name: "钱币骑士 (Knight of Pentacles)" },
-
         { name: "钱币皇后 (Queen of Pentacles)" }, { name: "钱币国王 (King of Pentacles)" }
-
     ];
 
-
-
     let globalQrcode = null; 
+    let currentRankGlobal = "B"; 
 
+    // ==================== 【高深精神动力学独立文本词库】 ====================
+    const MYSTIC_LEXICON = {
+        memory: {
+            high: "你的『精神镜像留存率』发生超维共振。在认知神经动力学中，这代表你的意识底层留有极高密度的『信息事件残影』。你不是在记录，而是在对现实进行高保真全息拓印，这种特质往往伴随着沉重的『思维反刍刻印』，注定无法对任何微小的逻辑断层视而不见。",
+            mid: "你的思维处于『模态熵减过滤机制』中。你的潜意识对现实世界进行着冷酷的绝对防御，自动截断冗余杂讯，仅允许符合你固有逻辑范式（Paradigm）的『纯粹模因』进入稳态核心。这是一种极其高效的、带有演化防御性质的『冷干涉』行为。",
+            low: "意味着你处于『瞬时信息坍缩』的绝对真空区。你的灵魂具备天然的『模声免疫性』，抗拒被过去的因果链条（Karmic Chain）所锚定。你更偏向于动态的线性概率，在信息流中随过随消，呈现出一种罕见的、不留信息主权痕迹的『无功流浪状态』。"
+        },
+        reaction: {
+            high: "这绝非机械的反射弧，而是跨越了理性逻辑层、直接在生物本能中显化的『概率剪裁本能』。在高熵值、无序的信息风暴中，你能在全神经元爆发的瞬间剥离时空连续性，直接执行本能的最优解计算，从而实现对外部物理干涉的『阈值级反制』。",
+            mid: "这代表你是一位『视界边缘的审视者』。在信息输入到行为输出之间，你的意识存在一个极短但高密度的『混沌纠缠延迟』。你习惯将现实事件置于动态模型中进行极速的多维风险推演，从而确保每一步行为坍缩（Behavioral Collapse）都具有确定性的压制力。",
+            low: "你的思维呈现『深度稳态蓄能』特质。比起应对高频、琐碎的表象刺激，你的神经通路更倾向于对底层的大规模宏观数据进行广域的『容积率积压』。一旦跨越了势能临界点（Critical Mass），你的输出便会直接绕过战术层面，对全域进行不可逆的战略格式化。"
+        },
+        rhythm: {
+            high: "映射出潜意识中极强的『稳态秩序强制坍缩欲』。你对外界环境中微小的失谐（Dysrhythmia）有着近乎生理性的敏锐捕获力，是自我精神边界的『强权主宰』。然而，这也意味着你正在持续承受高强度的『内在熵增内耗』，不断在无序的现实中进行高成本的构筑。",
+            mid: "表现为卓越的『生态协变与位相自适应力』。你具备极其丝滑的『社会人格流体特质』，擅长将自身的精神波长无缝调谐至任意外部场域（Field）的主导节奏中。在宏观层面上，你是平衡规则冲突、在系统漏洞中优雅漫步的拓扑旅行者。",
+            low: "这意味着你拥有『绝对游离的非线性灵魂』。你的精神通路极度抗拒被任何周期性、死板的结构化常数所奴役。在外界视作无序、混乱的『白噪音』深处，你反而能凭借错位、跳跃的波形，踩出一条只属于你个人因果率的暗流旋律。"
+        },
+        rank: {
+            text: {
+                SSR: "SSR 阶 · 破晓之神",
+                SR: "SR 阶 · 星轨编织者",
+                A: "A 阶 · 密教执行官",
+                B: "B 阶 · 迷途观测者"
+            },
+            SSR: {
+                title: "【高阶意识形态：超因果秩序解构者】",
+                backlash: "极致的稳态秩序感会带来严重的<b>【精神过载与信息毒性】</b>。你极难真正信任某种无序的直觉，总是试图将一切发展纳入你推演的动态范式中。这种高能耗的构筑，导致你在现实生活中极易产生阶段性的“情绪断电”或社交抽离——你不是冷漠，你只是在进行意识底噪的格式化去熵。",
+                fate: "你在团队或社群中会本能地走向<b>【绝对架构师】或【核心幕僚】</b>的位格。你抗拒平庸且毫无逻辑的指令，更倾向于自己搭建底层的运行机制。请警惕那些无法用常数衡量的感性羁绊，那将是唯一能让你的因果链坍缩的未知奇点。"
+            },
+            SR: {
+                title: "【中阶意识形态：星轨编织阈值者】",
+                backlash: "你面临的潜在危机是<b>【自我核心模因的稀释】</b>。因为你太容易理解并顺应环境的律动，反而容易在长期的角色调谐中，产生“我是谁”的精神空虚感。当你习惯用理性的利弊模型去消解当下的直觉时，你的创造力常数就会陷入停滞。",
+                fate: "你具有极强的<b>【系统解质性】</b>，是天生的规则游侠。你不会去硬刚死板的体制，but总能踩着微妙的节拍在漏洞中优雅漫步。你需要定期寻找一个绝对静默的观察点，斩断所有外部场域的调谐，来重新唤醒你被压制的信息主权。"
+            },
+            A: {
+                title: "【平衡意识形态：密教均衡执行官】",
+                backlash: "你的主要反噬来自于<b>【过度防御导致的势能滞后】</b>。在外界看来，你有时显得过于沉稳或按步就班，这是因为你的神经元在执行大规模的宏观数据积压。你太害怕跨越临界点后的不确定性，导致你经常在理性的反复自我审视中，错失了最佳的“行为坍缩”时机。",
+                fate: "你是现世文明中不可缺少的<b>【基石型掌控者】</b>。在极端动荡的危机中，他人会因为神经反射过载恢复慢而崩溃，而你厚重的能量锚点却能让你保持绝对的静默与清醒。当全域陷入混乱时，你给出的决定性一击，往往能直接进行局势的宏观重组。"
+            },
+            B: {
+                title: "【潜流意识形态：非线性迷途观测者】",
+                backlash: "你目前可能正处于严重的<b>【时空解离与动机匮乏】</b>。外界强加给你的周期性规则、死板的节奏（如世俗的评价、标准化的日程），在你的潜意识看来不过是毫无意义的白噪音。这种天然的排异反应，让你宁愿在自己的暗流旋律中沉睡，也不愿向世俗交出你的信息主权。",
+                fate: "你是一个天生的<b>【陈规破坏者】或【潜伏的潜流变数】</b>。一旦你找到那个能与你个人因果率产生同频共振的独特奇点，你从无序中踩出的错位波形，将会直接粉碎周围僵化的既定框架。请在信息高流中重新找回你被稀释的内在常数。"
+            }
+        }
+    };
 
-
+    // ==================== 【流程状态导向引擎】 ====================
     function nextStep(n) {
-
         const allSteps = document.querySelectorAll('.step');
-
         for(let i=0; i<allSteps.length; i++) {
-
             allSteps[i].classList.remove('active');
-
         }
-
         const target = document.getElementById('step' + n);
-
         if(target) {
-
             target.classList.add('active');
-
         }
-
         window.scrollTo(0, 0);
-
     }
-
-
 
     function checkStep1() {
-
         const b = document.getElementById('birthdate').value.trim();
-
         const t1Str = document.getElementById('t1').value;
-
         const t2Str = document.getElementById('t2').value;
-
         const t3Str = document.getElementById('t3').value;
 
-
-
         if(!b || t1Str==="" || t2Str==="" || t3Str==="") {
-
             alert("契约尚未完整，星轨无法锚定。");
-
             return;
-
         }
-
-
 
         const t1 = parseInt(t1Str);
-
         const t2 = parseInt(t2Str);
-
         const t3 = parseInt(t3Str);
 
-
-
         if (t1 < 0 || t1 > 77 || t2 < 0 || t2 > 77 || t3 < 0 || t3 > 77) {
-
             alert("输入错误！塔罗牌数值必须在 0 到 77 之间。");
-
             return;
-
         }
-
-
 
         const checkConst = getConstellation(b);
-
         if(checkConst === "未知星座") {
-
-            alert("生辰格式未能识别或日期不合法（请注意大小月及闰年2月限制），请输入类似 1913-07-07 的日期。");
-
+            alert("生辰格式未能识别或日期不合法（请注意大小月及闰年限制），请输入类似 1913-07-07 的正确格式。");
             return;
-
         }
-
-
 
         nextStep(2);
-
     }
-
-
 
     // ==================== 【日期严苛校验系统】 ====================
-
     function parseAndValidateDate(dateString) {
-
         if (!dateString) return null;
-
         let year = NaN, month = NaN, day = NaN;
 
-
-
-        // 1. 判断是否是 8 位紧凑数字 (例如：19130707)
-
         if (/^\d{8}$/.test(dateString)) {
-
             year = parseInt(dateString.substring(0, 4), 10);
-
             month = parseInt(dateString.substring(4, 6), 10);
-
             day = parseInt(dateString.substring(6, 8), 10);
-
         } else {
-
-            // 2. 兼容各种分隔符 (如 1913-07-07, 1913/07/07, 1913.07.07)
-
             const cleanStr = dateString.replace(/[\/\.\s]/g, '-');
-
             const parts = cleanStr.split('-');
-
             if (parts.length >= 3) {
-
                 year = parseInt(parts[0], 10);
-
                 month = parseInt(parts[1], 10);
-
                 day = parseInt(parts[2], 10);
-
             } else {
-
-                // 3. 实在不行的备用标准解析
-
                 const d = new Date(cleanStr);
-
                 if (!isNaN(d.getTime())) {
-
                     year = d.getFullYear();
-
                     month = d.getMonth() + 1;
-
                     day = d.getDate();
-
                 }
-
             }
-
         }
 
-
-
-        // 检查基础数值合法性
-
-        if (isNaN(year) || isNaN(month) || isNaN(day)) {
-
-            return null;
-
-        }
-
-        if (month < 1 || month > 12 || day < 1 || year < 1800 || year > 2100) {
-
-            return null;
-
-        }
-
-
-
-        // 4. 精准月天数校验（大月、小月、闰年二月）
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+        if (month < 1 || month > 12 || day < 1 || year < 1800 || year > 2100) return null;
 
         const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
         
-
         if (month === 2) {
-
-            // 闰年判断：可被 4 整除但不能被 100 整除，或可被 400 整除
-
             const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-
             const maxFebruaryDays = isLeap ? 29 : 28;
-
-            if (day > maxFebruaryDays) {
-
-                return null;
-
-            }
-
+            if (day > maxFebruaryDays) return null;
         } else {
-
-            if (day > monthDays[month - 1]) {
-
-                return null;
-
-            }
-
+            if (day > monthDays[month - 1]) return null;
         }
 
-
-
         return { year, month, day };
-
     }
-
-
 
     function getConstellation(dateString) {
-
         const parsedDate = parseAndValidateDate(dateString);
-
         if (!parsedDate) return "未知星座";
-
         
-
         const month = parsedDate.month;
-
         const day = parsedDate.day;
-
         
-
         const dates = [20, 19, 21, 20, 21, 22, 23, 23, 23, 24, 23, 22];
-
         const consts = ["摩羯座", "水瓶座", "双鱼座", "白羊座", "金牛座", "双子座", "巨蟹座", "狮子座", "处女座", "天秤座", "天蝎座", "射手座"];
-
         return day < dates[month - 1] ? consts[month - 1] : consts[month % 12];
-
     }
 
-
-
+    // ==================== 【灵魂解构综合评测算法】 ====================
     function generateFate() {
-
         try {
-
             const rawMem = document.getElementById('score_memory').value;
-
             const rawReact = document.getElementById('score_reaction').value;
-
             const rawRhythm = document.getElementById('score_rhythm').value;
 
-
-
             if (rawMem === "" || rawReact === "" || rawRhythm === "") {
-
                 alert("试炼数据不全，灵魂无法解构。");
-
                 return;
-
             }
 
-
-
             const birthdate = document.getElementById('birthdate').value.trim();
-
             const t1 = parseInt(document.getElementById('t1').value) || 0;
-
             const t2 = parseInt(document.getElementById('t2').value) || 0;
-
             const t3 = parseInt(document.getElementById('t3').value) || 0;
-
             
-
             const scoreMem = parseFloat(rawMem) || 0;
-
             const scoreReact = parseFloat(rawReact) || 0;
-
             const scoreRhythm = parseFloat(rawRhythm) || 0;
 
-
-
             const constellation = getConstellation(birthdate);
-
             const tarotIndex = (t1 + t2 + t3) % tarotDatabase.length;
-
             const chosenTarot = tarotDatabase[tarotIndex] || { name: "未知命牌" };
-
             const cardName = chosenTarot.name || "";
 
-
-
-            // 1. 数据归一化评估系统
-
             const memRate = Math.min(Math.max(scoreMem, 0), 100); 
-
             const rhythmRate = Math.min(Math.max(scoreRhythm, 0), 100);
-
             let reactRate = 0;
-
             if (scoreReact <= 180) reactRate = 100;
-
             else if (scoreReact >= 600) reactRate = 0;
-
             else reactRate = 100 - ((scoreReact - 180) / 4.2);
-
-
 
             const totalPower = (memRate * 0.3) + (reactRate * 0.4) + (rhythmRate * 0.3);
 
+            let rank = "B"; 
+            let cardImgSrc = "image/B.jpeg";
+            
+            if (totalPower >= 85) { rank = "SSR"; cardImgSrc = "image/SSR.jpeg"; }
+            else if (totalPower >= 65) { rank = "SR"; cardImgSrc = "image/SR.jpeg"; }
+            else if (totalPower >= 45) { rank = "A"; cardImgSrc = "image/A.jpeg"; }
 
+            currentRankGlobal = rank; 
 
-            // 2. 核心人格特质翻译层
+            let mTxt = scoreMem >= 85 ? MYSTIC_LEXICON.memory.high : (scoreMem >= 50 ? MYSTIC_LEXICON.memory.mid : MYSTIC_LEXICON.memory.low);
+            let reTxt = scoreReact <= 220 ? MYSTIC_LEXICON.reaction.high : (scoreReact <= 400 ? MYSTIC_LEXICON.reaction.mid : MYSTIC_LEXICON.reaction.low);
+            let rhTxt = scoreRhythm >= 95 ? MYSTIC_LEXICON.rhythm.high : (scoreRhythm >= 70 ? MYSTIC_LEXICON.rhythm.mid : MYSTIC_LEXICON.rhythm.low);
 
-            let memoryAnalysis = "";
-
-            if (scoreMem >= 85) {
-
-                memoryAnalysis = "你的『脑内信息留存率』处于爆发状态。在行为心理学中，这代表极强的细节敏锐度与记忆复盘天赋。你擅长从细微的线索中拼凑出事情的全貌，极具侦探潜质。";
-
-            } else if (scoreMem >= 50) {
-
-                memoryAnalysis = "这代表你的思维采取了『核心过滤模式』。你习惯自动过滤掉无用杂讯，只把精力留给真正重要、符合你逻辑框架的核心利益，是高效的实用主义者。";
-
-            } else {
-
-                memoryAnalysis = "意味着你拥有一颗『不愿被过去束缚的健忘灵魂』。你更在乎当下的直觉和未来的可能性，对于条条框框的琐碎记忆具有天然的免疫力，适合跳跃性创造。";
-
-            }
-
-
-
-            let reactionAnalysis = "";
-
-            if (scoreReact <= 220) {
-
-                reactionAnalysis = "这绝非简单的神经反射，而是恐怖的『危机生存直觉』与瞬间决断力。在高压或混乱的信息流中，你能瞬间剥离情绪干扰，本能地捕捉核心漏洞并一击制敌。";
-
-            } else if (scoreReact <= 400) {
-
-                reactionAnalysis = "这代表你是一位底蕴深厚的『冷静审视者』。在采取行动前，你的意识层会进行极速的利弊权衡与风险评估。不盲动、不轻敌，出手便极具针对性。";
-
-            } else {
-
-                reactionAnalysis = "你的思维模式偏向『深谋远虑的蓄力型』。比起高频率的快速试探，你更习惯在深度整合所有情报后，在关键节点给予全局最具决定性的一击。";
-
-            }
-
-
-
-            let rhythmAnalysis = "";
-
-            if (scoreRhythm >= 95) {
-
-                rhythmAnalysis = "映射出潜意识中极强的『秩序感与掌控欲』。你对生活、逻辑、或者环境中微小的失谐有着极强的感知力，是典型的完美主义架构师，也伴随一定的精神内耗。";
-
-            } else if (scoreRhythm >= 70) {
-
-                rhythmAnalysis = "表现为卓越的『生态协同与顺应力』。你擅长顺应环境与局势的流动节奏，在不同的规则圈子或社交角色之间丝滑切换，平衡感极佳。";
-
-            } else {
-
-                rhythmAnalysis = "这意味着你拥有『打破陈规的绝对自由灵魂』。你极度抗拒被固定的框架和死板的节奏所绑架。在旁人看来的无序中，你往往能踩出属于你自己的独特旋律。";
-
-            }
-
-
-
-            // 3. 塔罗元素冲突层
+            let dualityDesc = `你的星宿在【${constellation}】天区分野。在外在表征上，你沿袭了该星区的表象范式；然而在内在深处，【${cardName}】的引入，却强行为你注入了一层『人格二重非对称纠缠』。这是一场潜意识与现实世界的终极解构博弈。`;
 
             let elementDesc = "";
-
             if (cardName.indexOf("权杖") !== -1) {
-
-                elementDesc = `【${cardName}】作为火元素本源，与你的内在潜能剧烈共鸣，赋予了你狂热的扩张力与不可逆的执行意志。`;
-
+                elementDesc = `【${cardName}】作为火元素本源，激荡了你的『能量熵增模型』，让你的意志呈现出不可逆的喷涌执行态。`;
             } else if (cardName.indexOf("圣杯") !== -1) {
-
-                elementDesc = `【${cardName}】温润的水元素能量在灵魂深处静谧流淌，激发出你无与伦比的深层直觉天赋与情绪共情灵性。`;
-
+                elementDesc = `【${cardName}】作为水元素载体，在你的无意识深处建立了一条高维度的『情感潜流视界』，灵性觉知彻底漫过理性的边界。`;
             } else if (cardName.indexOf("宝剑") !== -1) {
-
-                elementDesc = `【${cardName}】凌厉的风元素利刃正切开命运的迷雾，赋予了你绝对清醒的理性审视力与摧枯拉朽的思辨突破。`;
-
+                elementDesc = `【${cardName}】作为风元素利刃，切断了多余的感性纠缠，使你的意识具备绝对客观、冷酷且摧枯拉朽的『思辨解构力』。`;
             } else if (cardName.indexOf("钱币") !== -1) {
-
-                elementDesc = `【${cardName}】厚重的土元素能量在大地深处轰鸣显化，赋予了你无比稳固的现世掌控力与极度扎实的执行韧性。`;
-
+                elementDesc = `【${cardName}】厚重的土元素能量在你的现世人格中筑起了稳固的『物质实相锚点』，具有极强的因果沉淀性与现实解构韧性。`;
             } else {
-
-                elementDesc = `古老大阿卡纳的神圣位格正在高空盘旋，为你加冕。`;
-
+                elementDesc = `古老大阿卡纳的『圣谱位格』正在你的命运天区高位盘旋，为你加冕。`;
             }
 
+            let cardData = MYSTIC_LEXICON.rank[rank] || MYSTIC_LEXICON.rank.B;
 
+            let compiledDescText = `
+                <p style="line-height:1.8; text-align:justify;">${dualityDesc}<br><br>${elementDesc}</p>
+                <div style="border-top: 1px double rgba(194,159,100,0.4); margin-top:15px; padding-top:15px;">
+                    <span style="color:${rank==='SSR'?'#ff4a4a':rank==='SR'?'#ffc264':rank==='A'?'#77ccff':'#bbb'}; font-weight:bold; font-size:1rem;">${cardData.title}</span>
+                    
+                    <p style="font-size:0.85rem; color:#aaa; line-height:1.8; text-align:justify; margin-top:10px;">
+                        <b>✦ 灵视记忆刻印：</b>${mTxt}
+                    </p>
+                    <p style="font-size:0.85rem; color:#aaa; line-height:1.8; text-align:justify; margin-top:10px;">
+                        <b>✦ 概率剪裁本能：</b>${reTxt}
+                    </p>
+                    <p style="font-size:0.85rem; color:#aaa; line-height:1.8; text-align:justify; margin-top:10px;">
+                        <b>✦ 稳态秩序映射：</b>${rhTxt}
+                    </p>
+                    
+                    <span style="color:var(--ancient-gold); font-weight:bold; font-size:0.9rem; display:block; margin-top:15px;">✦ 动态行为反噬（暗面）：</span>
+                    <p style="font-size:0.85rem; color:#aaa; line-height:1.8; text-align:justify; margin-top:5px;">${cardData.backlash}</p>
+                    
+                    <span style="color:var(--ancient-gold); font-weight:bold; font-size:0.9rem; display:block; margin-top:15px;">✦ 命运轨迹演化：</span>
+                    <p style="font-size:0.85rem; color:#aaa; line-height:1.8; text-align:justify; margin-top:5px;">${cardData.fate}</p>
+                </div>
+            `;
 
-            // 4. 固定星座矛盾张力层
-
-            let dualityDesc = `星宿在【${constellation}】天区分野交错。在外在，你承袭了该星区的行事风范；但在内在深处，【${cardName}】的出现，却为你构筑了一层精妙的人格双重性。这是一场感性与理性的终极博弈。`;
-
-
-
-            // 5. 阶级与总控判定（已精准修正为单数 image/ 路径）
-
-            let rank = ""; let desc = ""; let cardImgSrc = "";
-
-            if (totalPower >= 85) { 
-
-                rank = "SSR";
-
-                cardImgSrc = "image/SSR.jpeg";
-
-                desc = `${dualityDesc}<br><br>${elementDesc}培风数据核心判定：你是万中无一的异能掌控者。<br><br>✦ <b>生存直觉特质：</b>${reactionAnalysis}<br><br>✦ <b>秩序秩序映射：</b>${rhythmAnalysis}<br><br>✦ <b>信息留存潜能：</b>${memoryAnalysis}`;
-
-            } else if (totalPower >= 65) {
-
-                rank = "SR";
-
-                cardImgSrc = "image/SR.jpeg";
-
-                desc = `${dualityDesc}<br><br>${elementDesc}你的精神波长在此刻高度稳定。<br><br>✦ <b>生存直觉特质：</b>${reactionAnalysis}<br><br>✦ <b>秩序秩序映射：</b>${rhythmAnalysis}`;
-
-            } else if (totalPower >= 45) {
-
-                rank = "A";
-
-                cardImgSrc = "image/A.jpeg";
-
-                desc = `在【${constellation}】的庇护下，【${cardName}】成为了你的精神能量锚点。你属于表现均衡的稳定型人格。虽然在时间的瞬息变幻中偶有波动，但你的内在意志足够坚韧。<br><br>✦ <b>生存直觉特质：</b>${reactionAnalysis}<br><br>✦ <b>秩序秩序映射：</b>${rhythmAnalysis}`;
-
-            } else {
-
-                rank = "B";
-
-                cardImgSrc = "image/B.jpeg";
-
-                desc = `星轨在【${constellation}】产生些许偏轨，【${cardName}】提示你当前处于静默沉睡状态。肉体试炼尚未完全激发你的潜在灵体。请保持专注，在培风资讯社的信息流中找回你的内在律动。<br><br>✦ <b>灵魂指引：</b>${rhythmAnalysis}`;
-
-            }
-
-
-
-            const fullRankText = rank === "SSR" ? "SSR 阶 · 破晓之神" : (rank === "SR" ? "SR 阶 · 星轨编织者" : (rank === "A" ? "A 阶 · 密教执行官" : "B 阶 · 迷途观测者"));
-
-            document.getElementById('fate_rank').innerText = fullRankText;
-
-            
-
-            // 完美加载图片
-
+            document.getElementById('fate_rank').innerText = MYSTIC_LEXICON.rank.text[rank];
             document.getElementById('fate_card_img').src = cardImgSrc;
-
             
-
             document.getElementById('res_constellation').innerText = constellation;
-
             document.getElementById('res_tarot').innerText = cardName;
-
             document.getElementById('res_memory').innerText = scoreMem + " pt";
-
             document.getElementById('res_reaction').innerText = scoreReact + " ms";
-
             document.getElementById('res_rhythm').innerText = scoreRhythm + " %";
-
-            document.getElementById('res_desc').innerHTML = desc;
-
-
+            
+            document.getElementById('res_desc').innerHTML = compiledDescText;
 
             nextStep(3);
 
-
-
+            // ==================== 【安全核销二维码联动机制】 ====================
             const currentUrlBase = window.location.origin + window.location.pathname;
-
             let staffUrl = "";
-
             if (currentUrlBase.endsWith('index.html')) {
-
                 staffUrl = currentUrlBase.replace('index.html', 'staff.html');
-
             } else if (currentUrlBase.endsWith('/')) {
-
                 staffUrl = currentUrlBase + 'staff.html';
-
             } else {
-
                 staffUrl = window.location.origin + '/staff.html';
-
             }
-
             
-
             const cleanRank = encodeURIComponent(rank);
+            const verifyLink = `${staffUrl}?r=${cleanRank}&t=${tarotIndex}&m=${scoreMem}&re=${scoreReact}&rh=${scoreRhythm}`;
 
-            const cleanTarotIndex = tarotIndex; 
-
-            const verifyLink = `${staffUrl}?r=${cleanRank}&t=${cleanTarotIndex}&m=${scoreMem}&re=${scoreReact}&rh=${scoreRhythm}`;
-
-
-
-            const container = document.getElementById('qrcode-container');
-
-            container.innerHTML = ""; 
-
-
-
-            // 计算核销码并优雅呈现至二维码正下方
+            const qrcodeContainer = document.getElementById('qrcode-container');
+            qrcodeContainer.innerHTML = ""; 
 
             const finalCode = `${rank}${tarotIndex}_${scoreMem}_${scoreReact}_${scoreRhythm}`;
-
             document.getElementById('qrcode-code-text').innerText = finalCode;
 
-
-
             setTimeout(function() {
-
                 try {
-
                     if (typeof QRCode !== 'undefined') {
-
-                        globalQrcode = new QRCode(container, {
-
+                        globalQrcode = new QRCode(qrcodeContainer, {
                             text: verifyLink,
-
                             width: 140,
-
                             height: 140,
-
                             colorDark : "#000000",
-
                             colorLight : "#ffffff",
-
                             correctLevel : QRCode.CorrectLevel.H
-
                         });
-
                     } else {
-
-                        container.innerHTML = "<p style='color:black;font-size:0.8rem;padding:10px;'>印记渲染失败</p>";
-
+                        qrcodeContainer.innerHTML = "<p style='color:black;font-size:0.8rem;padding:10px;'>印记渲染失败</p>";
                     }
-
                 } catch (qrErr) {
-
-                    console.error("二维码扩展生成失败: ", qrErr);
-
-                    container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(verifyLink)}" width="140" height="140" style="display:block;margin:0 auto;"/>`;
-
+                    console.error("二维码本地组件渲染异常: ", qrErr);
+                    qrcodeContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(verifyLink)}" width="140" height="140" style="display:block;margin:0 auto;"/>`;
                 }
-
             }, 50);
 
-
-
         } catch (error) {
-
-            alert("解构失败: " + error.message);
-
+            alert("命运线缠绕错误: " + error.message);
         }
-
     }
 
+    // ==================== 【全新重构：原地捕获、动态纯化、零闪烁无损导出 PDF 引擎】 ====================
+    function downloadPurePDF() {
+        const textLinkBtn = document.getElementById('download-pdf-btn');
+        textLinkBtn.innerText = "✦ 法典拓印中，请稍候... ✦";
+        textLinkBtn.style.pointerEvents = "none"; // 临时锁死防狂点
+
+        // 直接抓屏幕上玩家在看的真实报告卡片节点
+        const targetElement = document.getElementById('main_report_card');
+        const qrBox = document.getElementById('pdf-exclude-qrcode');
+
+        // 【高保真纯化核心】：在 html2pdf 开始捕获的瞬间将二维码部分在画布上隐藏
+        if (qrBox) {
+            qrBox.style.display = 'none';
+        }
+
+        const options = {
+            margin:       [10, 8, 10, 8], 
+            filename:     `灵魂法典_${currentRankGlobal}_报告.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2,               // 提高到2倍DPI，解决内容发虚问题
+                useCORS: true,          // 完美继承本地或外链立绘图资产
+                backgroundColor: '#0a0a0c',
+                scrollX: 0,
+                scrollY: 0
+            },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // 丢入后台高保真捕获并下载
+        html2pdf().set(options).from(targetElement).save().then(() => {
+            // 【瞬间恢复】：PDF 触发下载后，一秒之内原地让核销二维码现形，不卡顿、不破坏前端体验
+            if (qrBox) {
+                qrBox.style.display = 'block';
+            }
+            textLinkBtn.innerText = "✦ 拓印留存 (下载灵魂法典 PDF) ✦";
+            textLinkBtn.style.pointerEvents = "auto";
+        }).catch(err => {
+            alert("PDF 拓印生成失败: " + err.message);
+            if (qrBox) {
+                qrBox.style.display = 'block';
+            }
+            textLinkBtn.innerText = "✦ 拓印留存 (下载灵魂法典 PDF) ✦";
+            textLinkBtn.style.pointerEvents = "auto";
+        });
+    }
 </script>
 
-
-
 </body>
-
 </html>
