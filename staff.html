@@ -325,7 +325,7 @@
     <h1>培风资讯社 · 核销主控台</h1>
 
     <div class="counter-box">
-        <div class="counter-title">✦ 现场成功发放礼品总人次 ✦</div>
+        <div class="counter-title">✦ 现场累计捕获展览到访人次 ✦</div>
         <div class="counter-num" id="total-scanned">0</div>
     </div>
 
@@ -358,7 +358,7 @@
                 <button class="manual-btn" onclick="processManualInput()">现场核销</button>
             </div>
             <span style="font-size: 0.75rem; color: #aaa; text-align: left; padding-left: 4px;">
-                💡 <b>盲打秘籍</b>：段位(1位)+牌号(2位)+识(2/3位)+疾+律。 1-SSR, 2-SR, 3-A, 4-B
+                💡 <b>盲打秘籍</b>：段位(1位)+牌号(2位)+识+疾+律。 1-SSR, 2-SR, 3-A, 4-B
             </span>
         </div>
     </div>
@@ -440,6 +440,7 @@
     let currentPool = 'current_day'; 
     let currentData = null;   
     let html5QrcodeScanner = null; 
+    let localScanCount = 0; // 用于现场独立递增统计到访人数
 
     const tarotNames = [
         "愚者", "魔术师", "女祭司", "皇后", "皇帝", "教皇", "恋人", "战车", "力量", "隐者", "命运之轮", "正义", "倒吊人", "死神", "节制", "恶魔", "塔", "星星", "月亮", "太阳", "审判", "世界",
@@ -514,7 +515,8 @@
             .from('logs')
             .select('*', { count: 'exact', head: true });
         if (!error && count !== null) {
-            document.getElementById('total-scanned').innerText = count;
+            localScanCount = count; // 基础值载入
+            document.getElementById('total-scanned').innerText = localScanCount;
         }
     }
 
@@ -538,7 +540,6 @@
         }
     }
 
-    // 🌟 核心调优：注入 30fps 极速刷新、1080P 高清原图、连续自动对焦机制
     function startCameraScanner() {
         const readerDiv = document.getElementById('reader');
         readerDiv.style.display = "block";
@@ -549,13 +550,12 @@
         }
 
         const scanConfig = { 
-            fps: 30,  // 🌟 从 15 帧提升到 30 帧，消除抖动残影
+            fps: 30,  
             qrbox: function(viewfinderWidth, viewfinderHeight) {
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                const edgeSize = Math.floor(minEdge * 0.85); // 🌟 稍微扩宽扫描检测窗口
+                const edgeSize = Math.floor(minEdge * 0.85); 
                 return { width: edgeSize, height: edgeSize };
             },
-            // 🌟 解锁手机原生超清画质 + 开启底层连续自动聚焦 (continuous focus)
             videoConstraints: { 
                 facingMode: { exact: "environment" }, 
                 width: { ideal: 1920, min: 1280 },
@@ -581,7 +581,6 @@
             },
             (err) => {}
         ).catch((err) => {
-            // 降级柔性处理
             const fallbackConfig = { fps: 30, qrbox: (w, h) => { const m = Math.min(w, h); return { width: Math.floor(m*0.85), height: Math.floor(m*0.85) }; } };
             html5QrcodeScanner.start(
                 { facingMode: "environment" }, fallbackConfig,
@@ -688,6 +687,10 @@
             document.getElementById('player-scores').innerText = currentData.stats;
 
             document.getElementById('confirmBtn').disabled = false;
+
+            // 🌟 核心逻辑微调：只要解析到卡牌内容（不管是扫码还是手动打入编号），现场参观总人数立刻+1
+            localScanCount++;
+            document.getElementById('total-scanned').innerText = localScanCount;
         }
     }
 
@@ -735,6 +738,7 @@
 
         const newCount = rawStocks[targetDbPoolId] - deductCount;
 
+        // 🌟 点击这个按钮，才会真正的去减除云端数据库的库存量
         const { error: stockErr } = await _supabase
             .from('stocks')
             .update({ count: newCount })
@@ -798,9 +802,6 @@
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stocks' }, payload => {
                 rawStocks[payload.new.id] = payload.new.count;
                 updateStockUI();
-            })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'logs' }, async () => {
-                await fetchTotalScannedCount(); 
             })
             .subscribe();
     }
