@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -189,10 +188,6 @@
             padding: 30px 22px;
             box-shadow: 0 0 30px rgba(194, 159, 100, 0.2);
             margin-bottom: 20px;
-        }
-
-        #pdf-clone-template {
-            display: none;
         }
 
         .rank-title {
@@ -418,7 +413,6 @@
             </div>
         </div>
 
-        <button id="download-pdf-btn" class="mystic-btn" style="background:#1c3d27; border-color:#418255;" onclick="downloadPurePDF()">✦ 拓印留存 (下载PDF报告) ✦</button>
         <button class="mystic-btn" style="background:transparent; opacity:0.6; font-size:1.1rem;" onclick="nextStep(0)">重新解构</button>
     </div>
 </div>
@@ -553,7 +547,7 @@
         
         "权杖": { keyword: "行动力、激情", desc: "你抽到了充满火能量的权杖牌。这说明你是个行动派，意志力非常顽强，一旦决定要做一件事就会立刻上手，性格直爽、执行力拉满！" },
         "圣杯": { keyword: "灵性、情感", desc: "你抽到了充满水能量的圣杯牌。这说明你的直觉 and 灵性非常强，心思非常细腻敏感，做事情很讲究“感觉”和情绪共鸣。" },
-        "宝剑": { keyword: "冷静、果断", desc: "你抽到了充满风能量的宝剑牌.这说明你是个绝对冷静理智的人，能够切断多余的纠结，思维像刀刃一样锋利，擅长用最理性的逻辑解决问题。" },
+        "宝剑": { keyword: "冷静、果断", desc: "你抽到了充满风能量的宝剑牌。这说明你是个绝对冷静理智的人，能够切断多余的纠结，思维像刀刃一样锋利，擅长用最理性的逻辑解决问题。" },
         "钱币": { keyword: "稳健、务实", desc: "你抽到了充满土能量的钱币牌。这说明你做事特别踏实稳重，非常有耐心，能够抗住枯燥的练习，一步一个脚印地去沉淀自己的硬实力。" }
     };
 
@@ -568,23 +562,23 @@
             },
             SSR: {
                 title: "【超越位格：神圣秩序的终极架构师】",
-                backlash: "由于体内的能量过于厚重、行事严谨，你往往太害怕走错一步所带来的不确定性，导致你经常在反复的自我审视与风险评估中，白白错失了最佳的出手时机和反转命运的机会。",
-                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重的能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
+                backlash: "Due to your energy being too heavy and rigorous, you often fear the uncertainty of taking a wrong step, leading you to waste perfect moments for action during repeated self-examination and risk assessment.",
+                fate: "You are an indispensable anchor in a turbulent era. When extreme crises hit and others panic from sensory overload, your heavy anchorage keeps you absolutely silent and clear-headed. When everything falls apart, your decisive action will directly rewrite reality and rebuild order."
             },
             SR: {
                 title: "【高阶位格：星轨缝隙的规则游侠】",
-                backlash: "由于体内的能量过于厚重、行事严谨，你往往太害怕走错一步所带来的不确定性，导致你经常在反复的自我审视与风险评估中，白白错失了最佳的出手时机和反转命运的机会。",
-                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
+                backlash: "Due to your energy being too heavy and rigorous, you often fear the uncertainty of taking a wrong step, leading you to waste perfect moments for action during repeated self-examination and risk assessment.",
+                fate: "You are an indispensable anchor in a turbulent era. When extreme crises hit and others panic from sensory overload, your heavy anchorage keeps you absolutely silent and clear-headed. When everything falls apart, your decisive action will directly rewrite reality and rebuild order."
             },
             A: {
                 title: "【均衡位格：厚重如山的深渊守护者】",
-                backlash: "由于体内的能量过于厚重、行事严谨，你往往太害怕走错一步所带来的不确定性，导致你经常在反复的自我审视与风险评估中，白白错失了最佳的出手时机和反转命运的机会。",
-                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重的能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
+                backlash: "Due to your energy being too heavy and rigorous, you often fear the uncertainty of taking a wrong step, leading you to waste perfect moments for action during repeated self-examination and risk assessment.",
+                fate: "You are an indispensable anchor in a turbulent era. When extreme crises hit and others panic from sensory overload, your heavy anchorage keeps you absolutely silent and clear-headed. When everything falls apart, your decisive action will directly rewrite reality and rebuild order."
             },
             B: {
                 title: "【秘境位格：执掌混沌的异类观测者】",
-                backlash: "由于体内的能量过于厚重、行事严谨，你往往太害怕走错一步所带来的不确定性，导致你经常在反复的自我审视与风险评估中，白白错失了最佳的出手时机和反转命运的机会。",
-                fate: "你是动荡局势中最不可或缺的定海神针。当极端危机降临、周围的人都因惊慌失措而手忙脚乱时，你那厚重的能量锚点能让你保持绝对的静默与清醒。当现有系统陷入瘫痪，由你给出的决定性一击，将直接逆转乾坤、重组秩序。"
+                backlash: "Due to your energy being too heavy and rigorous, you often fear the uncertainty of taking a wrong step, leading you to waste perfect moments for action during repeated self-examination and risk assessment.",
+                fate: "You are an indispensable anchor in a turbulent era. When extreme crises hit and others panic from sensory overload, your heavy anchorage keeps you absolutely silent and clear-headed. When everything falls apart, your decisive action will directly rewrite reality and rebuild order."
             }
         }
     };
@@ -643,7 +637,7 @@
             const cleanStr = dateString.replace(/[\/\.\s]/g, '-');
             const parts = cleanStr.split('-');
             if (parts.length >= 3) {
-                year = parseInt(parts[0], 10);
+                year = parseInt(parts[ Part 0], 10);
                 month = parseInt(parts[1], 10);
                 day = parseInt(parts[2], 10);
             } else {
@@ -817,59 +811,6 @@
         } catch (error) {
             alert("命运线异常: " + error.message);
         }
-    }
-
-    // ==================== 【PDF 下载留存模块 - 修复空白Bug版】 ====================
-    function downloadPurePDF() {
-        const btn = document.getElementById('download-pdf-btn');
-        btn.innerText = "✦ 法典拓印中... ✦";
-        btn.disabled = true;
-
-        const originalCard = document.getElementById('main_report_card');
-        const cloneCard = originalCard.cloneNode(true);
-
-        const qrcodeBox = cloneCard.querySelector('.qrcode-box');
-        if (qrcodeBox) {
-            qrcodeBox.remove();
-        }
-
-        // 关键修复点：不再使用带有 display:none 样式的 id="pdf-clone-template"
-        // 改为创建一个绝对定位到视口之外的可视化节点，确保 html2pdf 能完美捕捉渲染数据
-        const pdfWrapper = document.createElement('div');
-        pdfWrapper.style.position = 'absolute';
-        pdfWrapper.style.left = '-9999px'; 
-        pdfWrapper.style.top = '0';
-        pdfWrapper.style.width = '480px'; 
-        pdfWrapper.style.padding = '25px';
-        pdfWrapper.style.background = '#0a0a0c'; 
-        pdfWrapper.appendChild(cloneCard);
-        document.body.appendChild(pdfWrapper);
-
-        const options = {
-            margin:       10,
-            filename:     `灵魂法典_${currentRankGlobal}_报告.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { 
-                scale: 2,           
-                useCORS: true,      
-                backgroundColor: '#0a0a0c' 
-            },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // 增加一个短暂的宏任务延迟，防止复杂样式未加载完成
-        setTimeout(() => {
-            html2pdf().set(options).from(pdfWrapper).save().then(() => {
-                btn.innerText = "✦ 拓印留存 (下载PDF报告) ✦";
-                btn.disabled = false;
-                pdfWrapper.remove(); 
-            }).catch(err => {
-                alert("PDF 拓印生成失败: " + err.message);
-                btn.innerText = "✦ 拓印留存 (下载PDF报告) ✦";
-                btn.disabled = false;
-                if(pdfWrapper) pdfWrapper.remove();
-            });
-        }, 50);
     }
 </script>
 
