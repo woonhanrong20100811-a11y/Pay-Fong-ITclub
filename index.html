@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -190,6 +191,10 @@
             margin-bottom: 20px;
         }
 
+        #pdf-clone-template {
+            display: none;
+        }
+
         .rank-title {
             text-align: center;
             font-size: 1.8rem;
@@ -346,21 +351,21 @@
         <p class="subtitle">第二阶段：试炼</p>
 
         <div class="input-ritual-box">
-            <label>「记」记忆测试</label>
-            <input type="number" id="score_memory" placeholder="输入最终得分">
-            <div class="game-tag">记忆精确度测试</div>
-        </div>
-
-        <div class="input-ritual-box">
-            <label>「速」反应试炼 (毫秒)</label>
-            <input type="number" id="score_reaction" placeholder="输入反应毫秒">
-            <div class="game-tag">反应时间感知</div>
-        </div>
-
-        <div class="input-ritual-box">
             <label>「律」节奏准度 (%)</label>
             <input type="number" id="score_rhythm" placeholder="输入准度百分比 (%)">
             <div class="game-tag">节奏同步率</div>
+        </div>
+
+        <div class="input-ritual-box">
+            <label>「速」反应试炼</label>
+            <input type="number" id="score_reaction" placeholder="输入最终得分">
+            <div class="game-tag">反应能力测试</div>
+        </div>
+
+        <div class="input-ritual-box">
+            <label>「记」记忆测试 (秒)</label>
+            <input type="number" id="score_memory" placeholder="输入耗时秒数">
+            <div class="game-tag">记忆反应速度</div>
         </div>
 
         <button class="mystic-btn" onclick="generateFate()">解析灵魂报告</button>
@@ -386,16 +391,16 @@
                 <span class="item-val" id="res_tarot">-</span>
             </div>
             <div class="report-item">
-                <span class="item-label">✦ 灵视精度 (记忆力)</span>
-                <span class="item-val" id="res_memory">-</span>
+                <span class="item-label">✦ 神圣律动 (节奏感)</span>
+                <span class="item-val" id="res_rhythm">-</span>
             </div>
             <div class="report-item">
                 <span class="item-label">✦ 瞬动神速 (反应力)</span>
                 <span class="item-val" id="res_reaction">-</span>
             </div>
             <div class="report-item">
-                <span class="item-label">✦ 神圣律动 (节奏感)</span>
-                <span class="item-val" id="res_rhythm">-</span>
+                <span class="item-label">✦ 灵视精度 (记忆力)</span>
+                <span class="item-val" id="res_memory">-</span>
             </div>
 
             <div class="destiny-text" id="res_desc">
@@ -413,6 +418,7 @@
             </div>
         </div>
 
+        <button id="download-pdf-btn" class="mystic-btn" style="background:#1c3d27; border-color:#418255;" onclick="downloadPurePDF()">✦ 拓印留存 (下载PDF报告) ✦</button>
         <button class="mystic-btn" style="background:transparent; opacity:0.6; font-size:1.1rem;" onclick="nextStep(0)">重新解构</button>
     </div>
 </div>
@@ -518,6 +524,7 @@
     ];
 
     let globalQrcode = null; 
+    let currentRankGlobal = "B"; 
 
     // ==================== 【大白话塔罗牌库特性完全解构表】 ====================
     const TAROT_EXPLAIN_MAP = {
@@ -689,21 +696,21 @@
             const t2 = parseInt(document.getElementById('t2').value) || 0;
             const t3 = parseInt(document.getElementById('t3').value) || 0;
             
-            const scoreMem = parseFloat(rawMem) || 0;
-            const scoreReact = parseFloat(rawReact) || 0;
             const scoreRhythm = parseFloat(rawRhythm) || 0;
+            const scoreReact = parseFloat(rawReact) || 0;
+            const scoreMem = parseFloat(rawMem) || 0;
 
             const constellation = getConstellation(birthdate);
             const tarotIndex = (t1 + t2 + t3) % tarotDatabase.length;
             const chosenTarot = tarotDatabase[tarotIndex] || { name: "未知命牌" };
             const cardName = chosenTarot.name || "";
 
-            const memRate = Math.min(Math.max(scoreMem, 0), 100); 
             const rhythmRate = Math.min(Math.max(scoreRhythm, 0), 100);
-            let reactRate = 0;
-            if (scoreReact <= 180) reactRate = 100;
-            else if (scoreReact >= 600) reactRate = 0;
-            else reactRate = 100 - ((scoreReact - 180) / 4.2);
+            const reactRate = Math.min(Math.max(scoreReact, 0), 100);
+            let memRate = 0;
+            if (scoreMem >= 180) memRate = 0;
+            else if (scoreMem <= 30) memRate = 100;
+            else memRate = 100 - ((scoreMem - 30) / 1.5);
 
             const totalPower = (memRate * 0.3) + (reactRate * 0.4) + (rhythmRate * 0.3);
 
@@ -713,6 +720,8 @@
             if (totalPower >= 85) { rank = "SSR"; cardImgSrc = "image/SSR.jpeg"; }
             else if (totalPower >= 65) { rank = "SR"; cardImgSrc = "image/SR.jpeg"; }
             else if (totalPower >= 45) { rank = "A"; cardImgSrc = "image/A.jpeg"; }
+
+            currentRankGlobal = rank; 
 
             let cardKey = "世界"; 
             let cardKeywords = "平衡、圆满";
@@ -758,9 +767,9 @@
             
             document.getElementById('res_constellation').innerText = constellation;
             document.getElementById('res_tarot').innerText = cardName;
-            document.getElementById('res_memory').innerText = scoreMem + " pt";
-            document.getElementById('res_reaction').innerText = scoreReact + " ms";
             document.getElementById('res_rhythm').innerText = scoreRhythm + " %";
+            document.getElementById('res_reaction').innerText = scoreReact + " pt";
+            document.getElementById('res_memory').innerText = scoreMem + " s";
             
             document.getElementById('res_desc').innerHTML = compiledDescText;
 
@@ -808,6 +817,59 @@
         } catch (error) {
             alert("命运线异常: " + error.message);
         }
+    }
+
+    // ==================== 【PDF 下载留存模块 - 修复空白Bug版】 ====================
+    function downloadPurePDF() {
+        const btn = document.getElementById('download-pdf-btn');
+        btn.innerText = "✦ 法典拓印中... ✦";
+        btn.disabled = true;
+
+        const originalCard = document.getElementById('main_report_card');
+        const cloneCard = originalCard.cloneNode(true);
+
+        const qrcodeBox = cloneCard.querySelector('.qrcode-box');
+        if (qrcodeBox) {
+            qrcodeBox.remove();
+        }
+
+        // 关键修复点：不再使用带有 display:none 样式的 id="pdf-clone-template"
+        // 改为创建一个绝对定位到视口之外的可视化节点，确保 html2pdf 能完美捕捉渲染数据
+        const pdfWrapper = document.createElement('div');
+        pdfWrapper.style.position = 'absolute';
+        pdfWrapper.style.left = '-9999px'; 
+        pdfWrapper.style.top = '0';
+        pdfWrapper.style.width = '480px'; 
+        pdfWrapper.style.padding = '25px';
+        pdfWrapper.style.background = '#0a0a0c'; 
+        pdfWrapper.appendChild(cloneCard);
+        document.body.appendChild(pdfWrapper);
+
+        const options = {
+            margin:       10,
+            filename:     `灵魂法典_${currentRankGlobal}_报告.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2,           
+                useCORS: true,      
+                backgroundColor: '#0a0a0c' 
+            },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // 增加一个短暂的宏任务延迟，防止复杂样式未加载完成
+        setTimeout(() => {
+            html2pdf().set(options).from(pdfWrapper).save().then(() => {
+                btn.innerText = "✦ 拓印留存 (下载PDF报告) ✦";
+                btn.disabled = false;
+                pdfWrapper.remove(); 
+            }).catch(err => {
+                alert("PDF 拓印生成失败: " + err.message);
+                btn.innerText = "✦ 拓印留存 (下载PDF报告) ✦";
+                btn.disabled = false;
+                if(pdfWrapper) pdfWrapper.remove();
+            });
+        }, 50);
     }
 </script>
 
